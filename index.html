@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自然發音與多益單字學習平台 - Phonics TOEIC Master</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for parsing Excel files (.xlsx, .xls) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            phonics: ['Fredoka', 'Inter', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom animation and syllable styles */
+    .syllable-tag {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .syllable-tag:hover {
+      transform: translateY(-2px) scale(1.05);
+    }
+    .syllable-tag:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .playing-pulse {
+      animation: pulse-ring 1.2s infinite ease-in-out;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-graduation-cap text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-slate-900 text-lg tracking-tight font-phonics">Phonics TOEIC</span>
+              <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-semibold">自然發音</span>
+            </div>
+            <p class="text-xs text-slate-500 hidden sm:block">多益單字自然發音規則拆解與音節拼讀系統</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <button id="nav-learn-btn" onclick="switchTab('learn')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-blue-600 shadow-sm">
+            <i class="fa-solid fa-book-open"></i>
+            <span>發音學習</span>
+          </button>
+          <button id="nav-quiz-btn" onclick="switchTab('quiz')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-spell-check"></i>
+            <span>單字測驗</span>
+            <span class="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">10題</span>
+          </button>
+        </nav>
+
+        <!-- Excel File Upload Button -->
+        <div class="flex items-center space-x-2">
+          <label for="excel-file-input" class="cursor-pointer inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition-all">
+            <i class="fa-solid fa-file-excel"></i>
+            <span class="hidden sm:inline">匯入 Excel 單字庫</span>
+            <span class="sm:hidden">匯入</span>
+          </label>
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: 發音學習 (PHONICS LEARNING)         -->
+    <!-- ========================================== -->
+    <div id="tab-learn" class="space-y-6">
+      
+      <!-- Banner / Phonics Intro -->
+      <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 opacity-10 pointer-events-none text-9xl">
+          <i class="fa-solid fa-headphones"></i>
+        </div>
+        <div class="relative z-10 max-w-3xl">
+          <div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium mb-3">
+            <i class="fa-solid fa-sparkles text-amber-300"></i>
+            <span>自然發音 (Phonics) 核心秘訣：見字讀音，聽音拼字</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">多益單字自然發音規則學習館</h1>
+          <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-4">
+            點選單字旁的 <strong class="text-white underline decoration-amber-400">音節標籤</strong> 可單獨聆聽該音節慢速發音；點選單字按鈕可聆聽全字發音。系統自動為多益單字解析母音群 (Vowel Teams)、Magic-e、字首字尾等拼讀規則！
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <div class="flex items-center space-x-1.5 bg-black/20 px-3 py-1.5 rounded-lg">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span>目前載入：<strong id="vocab-count-badge" class="font-bold text-white">0</strong> 個單字</span>
+            </div>
+            <div class="flex items-center space-x-1.5 bg-black/20 px-3 py-1.5 rounded-lg">
+              <i class="fa-solid fa-layer-group text-sky-300"></i>
+              <span>主題工作表：<strong id="sheet-count-badge" class="font-bold text-white">5</strong> 個分類</span>
+            </div>
+            <div class="flex items-center space-x-1.5 bg-black/20 px-3 py-1.5 rounded-lg">
+              <i class="fa-solid fa-info-circle text-sky-300"></i>
+              <span>支援拖放或點擊右上角匯入您自己的多益 Excel</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Learning Progress Dashboard -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">單字學習與熟記進度</h3>
+              <p class="text-xs text-slate-500">點擊單字卡片右側的標記按鈕即可追蹤個人掌握狀況</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="resetLearningProgress()" class="text-xs text-slate-400 hover:text-slate-600 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition">
+              <i class="fa-solid fa-arrow-rotate-left mr-1"></i>重置進度
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar & Key Stats -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-semibold text-slate-600">總體掌握度：<span id="progress-percentage" class="text-blue-600 font-bold">0%</span></span>
+            <span class="text-slate-500">已掌握 <strong id="stat-mastered-count" class="text-emerald-600">0</strong> / 待加強 <strong id="stat-flagged-count" class="text-amber-600">0</strong> / 總數 <span id="stat-total-count">150</span></span>
+          </div>
+          <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
+            <div id="progress-bar-mastered" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%" title="已掌握"></div>
+            <div id="progress-bar-flagged" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%" title="需加強"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Multidimensional Filter Toolbar -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <!-- Top row: Search input & Status Filter -->
+        <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="search-input" oninput="handleSearchFilter()" placeholder="搜尋單字、中文解釋或自然發音規則 (例: tion, Magic-e, ai)..." 
+              class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+            <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Learning Status Quick Filter -->
+          <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
+            <button onclick="setStatusFilter('all')" class="status-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition" data-status="all">全部</button>
+            <button onclick="setStatusFilter('mastered')" class="status-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1" data-status="mastered">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i><span>已掌握</span>
+            </button>
+            <button onclick="setStatusFilter('flagged')" class="status-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1" data-status="flagged">
+              <i class="fa-solid fa-bookmark text-amber-500"></i><span>需加強</span>
+            </button>
+            <button onclick="setStatusFilter('unlearned')" class="status-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition" data-status="unlearned">未學習</button>
+          </div>
+        </div>
+
+        <!-- Bottom row: Dropdowns for Theme/Sheet, Difficulty Level, and Phonics Rules -->
+        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-3">
+          <!-- Theme / Sheet Category Selector -->
+          <div class="flex items-center space-x-1.5">
+            <label for="sheet-filter-select" class="text-xs font-bold text-slate-500 whitespace-nowrap">
+              <i class="fa-regular fa-folder mr-1"></i>主題分類:
+            </label>
+            <select id="sheet-filter-select" onchange="handleSheetFilterChange(this.value)" 
+              class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="all">🌟 全部主題 (5個分類共150字)</option>
+              <option value="01 Occupation">👔 01 職業 (Occupation - 30字)</option>
+              <option value="02 Recreation">🎨 02 娛樂 (Recreation - 30字)</option>
+              <option value="03 Sports">⚽ 03 運動 (Sports - 30字)</option>
+              <option value="04 Events">📅 04 活動 (Events - 30字)</option>
+              <option value="05 Shopping">🛍️ 05 購物 (Shopping - 30字)</option>
+            </select>
+          </div>
+
+          <!-- Difficulty / Syllable Level Selector -->
+          <div class="flex items-center space-x-1.5">
+            <label for="difficulty-filter-select" class="text-xs font-bold text-slate-500 whitespace-nowrap">
+              <i class="fa-solid fa-stairs mr-1"></i>難易度:
+            </label>
+            <select id="difficulty-filter-select" onchange="handleDifficultyFilterChange(this.value)" 
+              class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="all">全部難易度</option>
+              <option value="beginner">🟢 基礎 (1-2音節/短母音/基礎規則)</option>
+              <option value="intermediate">🟡 進階 (3音節/長母音/複合音節)</option>
+              <option value="advanced">🔴 挑戰 (4音節以上/多字尾音變)</option>
+            </select>
+          </div>
+
+          <!-- Phonics Rule Filter Chips -->
+          <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-1">
+            <span class="text-xs text-slate-400 font-semibold whitespace-nowrap"><i class="fa-solid fa-filter mr-1"></i>規則:</span>
+            <button onclick="setRuleFilter('all')" class="rule-chip active bg-blue-600 text-white text-xs px-2.5 py-1 rounded-lg font-medium transition-all" data-rule="all">全部</button>
+            <button onclick="setRuleFilter('vowel-team')" class="rule-chip bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-2.5 py-1 rounded-lg font-medium transition-all" data-rule="vowel-team">母音組合</button>
+            <button onclick="setRuleFilter('magic-e')" class="rule-chip bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-2.5 py-1 rounded-lg font-medium transition-all" data-rule="magic-e">Magic-e</button>
+            <button onclick="setRuleFilter('r-controlled')" class="rule-chip bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-2.5 py-1 rounded-lg font-medium transition-all" data-rule="r-controlled">R-音節</button>
+            <button onclick="setRuleFilter('suffix-tion')" class="rule-chip bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-2.5 py-1 rounded-lg font-medium transition-all" data-rule="suffix-tion">常見字尾</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phonics Quick Legend Guide -->
+      <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-lightbulb text-amber-500 text-base"></i>
+          <span class="font-bold">自然發音互動指南：</span>
+          <span class="text-amber-800">點擊每個彩色的 <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">音節標籤</span> 即可聽到慢速分段音節發音；點擊 <span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold"><i class="fa-solid fa-volume-high mr-1"></i>全字</span> 聆聽完整標準美語發音！</span>
+        </div>
+        <div class="flex items-center space-x-3 text-slate-600">
+          <label class="flex items-center space-x-1 cursor-pointer">
+            <span class="text-xs">發音語速:</span>
+            <select id="voice-rate" class="bg-white border border-amber-300 rounded px-2 py-0.5 text-xs text-slate-800 focus:outline-none">
+              <option value="0.75">慢速 (0.75x)</option>
+              <option value="0.9" selected>正常 (0.9x)</option>
+              <option value="1.0">標準 (1.0x)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Words Grid -->
+      <div id="words-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Word cards will be rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+        <div class="w-16 h-16 mx-auto bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl mb-3">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-700 mb-1">找不到符合的單字</h3>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto mb-4">請嘗試更換關鍵字，或重新選擇發音規則篩選項目。</p>
+        <button onclick="clearSearch()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-xl font-medium hover:bg-blue-700 transition">
+          重置搜尋條件
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: 單字測驗 (VOCABULARY QUIZ)          -->
+    <!-- ========================================== -->
+    <div id="tab-quiz" class="hidden space-y-6">
+
+      <!-- Quiz Welcome / Intro Card (Shown before quiz starts) -->
+      <div id="quiz-start-screen" class="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl text-center space-y-6">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-spell-check"></i>
+        </div>
+        <div>
+          <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full mb-2">多益自然發音實戰</span>
+          <h2 class="text-2xl sm:text-3xl font-black text-slate-900">10 題自然發音隨機測驗</h2>
+          <p class="text-slate-600 text-sm mt-2 max-w-md mx-auto">
+            每次測驗將從目前單字庫中隨機抽出 <strong class="text-indigo-600">10 題</strong>。結合音節發音、聽力與自然發音拼讀規則，答錯時會立即顯示詳細音節解說與發音糾正！
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 max-w-md mx-auto py-2">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+            <div class="text-lg font-black text-indigo-600">10</div>
+            <div class="text-xs text-slate-500">測驗題數</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+            <div class="text-lg font-black text-emerald-600">即時</div>
+            <div class="text-xs text-slate-500">發音解析</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+            <div class="text-lg font-black text-amber-600">雙向</div>
+            <div class="text-xs text-slate-500">聽力+拼讀</div>
+          </div>
+        </div>
+
+        <!-- Mode selection -->
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-left max-w-md mx-auto">
+          <label class="block text-xs font-bold text-slate-700 mb-2">選擇測驗題型偏好：</label>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 transition">
+              <input type="radio" name="quiz-type" value="audio-meaning" checked class="text-indigo-600 focus:ring-indigo-500">
+              <span class="font-medium text-slate-800">🎧 聽音選中文字 (播放單字/音節發音，選出正確中文釋義)</span>
+            </label>
+            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 transition">
+              <input type="radio" name="quiz-type" value="mixed" class="text-indigo-600 focus:ring-indigo-500">
+              <span class="font-medium text-slate-700">綜合題型 (聽音選中文字、音節重組、自然發音規則推斷)</span>
+            </label>
+            <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 transition">
+              <input type="radio" name="quiz-type" value="listening" class="text-indigo-600 focus:ring-indigo-500">
+              <span class="font-medium text-slate-700">聽音拼字測驗 (聽發音選出正確英文單字)</span>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="startQuiz()" class="w-full max-w-md mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/25 transition transform active:scale-95 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-play"></i>
+          <span>開始 10 題測驗</span>
+        </button>
+      </div>
+
+      <!-- Quiz Playing Screen (Hidden by default) -->
+      <div id="quiz-playing-screen" class="hidden max-w-3xl mx-auto space-y-5">
+        
+        <!-- Quiz Header: Progress bar, question counter, score -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <button onclick="confirmExitQuiz()" class="text-slate-400 hover:text-slate-600 text-sm px-2 py-1 rounded-lg hover:bg-slate-100 transition" title="結束測驗">
+              <i class="fa-solid fa-arrow-left mr-1"></i>退出
+            </button>
+            <div class="h-4 w-px bg-slate-200"></div>
+            <div>
+              <span class="text-xs text-slate-400">目前進度</span>
+              <div class="text-sm font-bold text-slate-800">第 <span id="quiz-current-num" class="text-blue-600 font-extrabold text-base">1</span> / 10 題</div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="flex-1 max-w-xs">
+            <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div id="quiz-progress-bar" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 10%;"></div>
+            </div>
+          </div>
+
+          <!-- Live Score -->
+          <div class="text-right">
+            <span class="text-xs text-slate-400">目前答對</span>
+            <div class="text-sm font-bold text-emerald-600"><span id="quiz-score-num">0</span> 題</div>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
+          
+          <!-- Question Type Tag & Prompt -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span id="quiz-question-type-badge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">
+                自然發音聽力測驗
+              </span>
+              <button onclick="playCurrentQuestionAudio()" class="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>重播題目音效</span>
+              </button>
+            </div>
+            <h3 id="quiz-question-title" class="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+              請聽發音，選出符合音節拼讀規則的正確多益單字：
+            </h3>
+          </div>
+
+          <!-- Central Interactive Audio Area -->
+          <div id="quiz-audio-center" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 text-center space-y-3">
+            <div class="flex items-center justify-center space-x-3">
+              <!-- Full Word Audio Button -->
+              <button id="btn-quiz-play-word" onclick="playCurrentQuestionWord()" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl shadow-md transition transform active:scale-95 font-semibold text-sm">
+                <i class="fa-solid fa-volume-high text-base"></i>
+                <span>播放全字發音</span>
+              </button>
+              <!-- Syllable Audio Button -->
+              <button id="btn-quiz-play-syllable" onclick="playCurrentQuestionSyllables()" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl shadow-md transition transform active:scale-95 font-semibold text-sm">
+                <i class="fa-solid fa-cubes text-base"></i>
+                <span>音節慢速發音 (Syllables)</span>
+              </button>
+            </div>
+            
+            <div id="quiz-hint-box" class="text-xs text-slate-600 font-medium">
+              <!-- Dynamically populated hint or syllable display depending on question type -->
+            </div>
+          </div>
+
+          <!-- Options Grid -->
+          <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- 4 options will be injected dynamically -->
+          </div>
+
+          <!-- Instant Feedback Section (Appears after an option is selected) -->
+          <div id="quiz-feedback-box" class="hidden rounded-2xl p-5 border transition-all duration-300">
+            <!-- Header Result -->
+            <div class="flex items-start space-x-3 mb-3">
+              <div id="feedback-icon" class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white font-bold"></div>
+              <div>
+                <h4 id="feedback-title" class="font-extrabold text-base"></h4>
+                <p id="feedback-subtitle" class="text-xs mt-0.5"></p>
+              </div>
+            </div>
+
+            <!-- Phonics Breakdown Explanation Card (Especially valuable on wrong answer) -->
+            <div class="bg-white/80 rounded-xl p-4 border border-slate-200 space-y-2.5 text-xs text-slate-700">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-800">自然發音與音節拆解：</span>
+                <button id="btn-feedback-audio" class="text-blue-600 font-semibold flex items-center space-x-1 hover:underline">
+                  <i class="fa-solid fa-volume-high"></i>
+                  <span>再聽一次正確發音</span>
+                </button>
+              </div>
+
+              <!-- Syllable chunk visualization -->
+              <div id="feedback-syllables-list" class="flex flex-wrap gap-1.5 py-1"></div>
+
+              <!-- Phonics Rule summary -->
+              <div class="bg-blue-50/70 p-2.5 rounded-lg border border-blue-100">
+                <span class="font-bold text-blue-900 block mb-1"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>自然發音規則重點：</span>
+                <p id="feedback-rule-text" class="text-slate-700 leading-relaxed"></p>
+              </div>
+
+              <!-- Word meaning and example -->
+              <div class="text-slate-600">
+                <span class="font-bold text-slate-800">中文釋義：</span>
+                <span id="feedback-meaning-text" class="text-slate-900 font-medium"></span>
+              </div>
+            </div>
+
+            <!-- Next Button -->
+            <div class="mt-4 flex justify-end">
+              <button id="quiz-next-btn" onclick="nextQuestion()" class="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md flex items-center space-x-2 transition">
+                <span>下一題</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Quiz Finished Screen (Score Report) -->
+      <div id="quiz-result-screen" class="hidden max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl text-center space-y-6">
+        
+        <div id="result-badge-icon" class="w-24 h-24 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl shadow-inner">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+
+        <div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">測驗結算</span>
+          <h2 class="text-3xl font-black text-slate-900 mt-1">自然發音測驗完成！</h2>
+          <p id="result-encourage-msg" class="text-sm text-slate-600 mt-2 max-w-md mx-auto"></p>
+        </div>
+
+        <!-- Score Breakdown Cards -->
+        <div class="grid grid-cols-3 gap-3 max-w-md mx-auto">
+          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-blue-600">總得分</div>
+            <div class="text-2xl font-black text-blue-700 mt-1"><span id="result-final-score">0</span> / 100</div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-emerald-600">答對題數</div>
+            <div class="text-2xl font-black text-emerald-700 mt-1"><span id="result-correct-count">0</span> / 10</div>
+          </div>
+          <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-purple-600">答對率</div>
+            <div class="text-2xl font-black text-purple-700 mt-1"><span id="result-accuracy">0%</span></div>
+          </div>
+        </div>
+
+        <!-- Wrong questions review section -->
+        <div id="wrong-answers-container" class="text-left space-y-3 pt-2">
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+            <span>錯題自然發音重點複習 (<span id="wrong-count-badge">0</span> 題)</span>
+            <span class="text-[11px] text-slate-400 font-normal">多聽音節，加深記憶</span>
+          </h4>
+          <div id="wrong-answers-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+            <!-- Wrong questions will be rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+          <button onclick="startQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>再測一次 (全新10題)</span>
+          </button>
+          <button onclick="switchTab('learn')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-2xl transition active:scale-95 flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-book-open"></i>
+            <span>返回發音單字庫學習</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Custom Modal Box (No browser alert/confirm) -->
+  <div id="custom-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-white rounded-3xl max-w-sm w-full mx-4 p-6 shadow-2xl transform scale-95 transition-transform duration-200 border border-slate-100">
+      <div id="modal-icon-container" class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 id="modal-title" class="text-lg font-bold text-slate-900 mb-2">確認退出測驗？</h3>
+      <p id="modal-message" class="text-xs text-slate-600 leading-relaxed mb-6">目前的測驗進度將不會被保存，確定要返回測驗首頁嗎？</p>
+      <div class="flex items-center justify-end space-x-3">
+        <button id="modal-cancel-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="modal-confirm-btn" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================
+       1. 150 HIGH-FREQUENCY TOEIC VOCABULARY (5 SHEETS)
+       ========================================================== */
+    const RAW_TOEIC_WORDS = [
+      // === 01 Occupation (30 words) ===
+      { sheet: "01 Occupation", word: "receptionist", pos: "[n.] 名詞", phonetic: "/rɪˈsep.ʃən.ɪst/", meaning: "櫃檯接待員" },
+      { sheet: "01 Occupation", word: "dentist", pos: "[n.] 名詞", phonetic: "/ˈden.tɪst/", meaning: "牙醫" },
+      { sheet: "01 Occupation", word: "electrician", pos: "[n.] 名詞", phonetic: "/ɪˌlekˈtrɪʃ.ən/", meaning: "電工 / 電氣技師" },
+      { sheet: "01 Occupation", word: "surgeon", pos: "[n.] 名詞", phonetic: "/ˈsɝː.dʒən/", meaning: "外科醫生" },
+      { sheet: "01 Occupation", word: "painter", pos: "[n.] 名詞", phonetic: "/ˈpeɪn.tɚ/", meaning: "畫家 / 油漆工" },
+      { sheet: "01 Occupation", word: "tailor", pos: "[n.] 名詞", phonetic: "/ˈteɪ.lɚ/", meaning: "裁縫師" },
+      { sheet: "01 Occupation", word: "captain", pos: "[n.] 名詞", phonetic: "/ˈkæp.tɪn/", meaning: "船長 / 機長 / 隊長" },
+      { sheet: "01 Occupation", word: "hairstylist", pos: "[n.] 名詞", phonetic: "/ˈherˌstaɪ.lɪst/", meaning: "髮型設計師" },
+      { sheet: "01 Occupation", word: "pharmacist", pos: "[n.] 名詞", phonetic: "/ˈfɑːr.mə.sɪst/", meaning: "藥劑師" },
+      { sheet: "01 Occupation", word: "typist", pos: "[n.] 名詞", phonetic: "/ˈtaɪ.pɪst/", meaning: "打字員" },
+      { sheet: "01 Occupation", word: "accountant", pos: "[n.] 名詞", phonetic: "/əˈkaʊn.tənt/", meaning: "會計師" },
+      { sheet: "01 Occupation", word: "architect", pos: "[n.] 名詞", phonetic: "/ˈɑːr.kə.tekt/", meaning: "建築師" },
+      { sheet: "01 Occupation", word: "chef", pos: "[n.] 名詞", phonetic: "/ʃef/", meaning: "主廚 / 大廚" },
+      { sheet: "01 Occupation", word: "pilot", pos: "[n.] 名詞", phonetic: "/ˈpaɪ.lət/", meaning: "飛行員" },
+      { sheet: "01 Occupation", word: "journalist", pos: "[n.] 名詞", phonetic: "/ˈdʒɝː.nə.lɪst/", meaning: "新聞記者" },
+      { sheet: "01 Occupation", word: "consultant", pos: "[n.] 名詞", phonetic: "/kənˈsʌl.tənt/", meaning: "顧問" },
+      { sheet: "01 Occupation", word: "mechanic", pos: "[n.] 名詞", phonetic: "/məˈkæn.ɪk/", meaning: "技工 / 機械工" },
+      { sheet: "01 Occupation", word: "plumber", pos: "[n.] 名詞", phonetic: "/ˈplʌm.ɚ/", meaning: "水管水電工" },
+      { sheet: "01 Occupation", word: "veterinarian", pos: "[n.] 名詞", phonetic: "/ˌvet.ər.ɪˈner.i.ən/", meaning: "獸醫" },
+      { sheet: "01 Occupation", word: "translator", pos: "[n.] 名詞", phonetic: "/trænzˈleɪ.tɚ/", meaning: "筆譯員 / 翻譯家" },
+      { sheet: "01 Occupation", word: "librarian", pos: "[n.] 名詞", phonetic: "/laɪˈbrer.i.ən/", meaning: "圖書館員" },
+      { sheet: "01 Occupation", word: "curator", pos: "[n.] 名詞", phonetic: "/kjʊˈreɪ.tɚ/", meaning: "博物館館長 / 策展人" },
+      { sheet: "01 Occupation", word: "statistician", pos: "[n.] 名詞", phonetic: "/ˌstæt.ɪˈstɪʃ.ən/", meaning: "統計學家" },
+      { sheet: "01 Occupation", word: "optician", pos: "[n.] 名詞", phonetic: "/ɑːpˈtɪʃ.ən/", meaning: "驗光配鏡師" },
+      { sheet: "01 Occupation", word: "detective", pos: "[n.] 名詞", phonetic: "/dɪˈtek.tɪv/", meaning: "偵探 / 刑警" },
+      { sheet: "01 Occupation", word: "carpenter", pos: "[n.] 名詞", phonetic: "/ˈkɑːr.pən.tɚ/", meaning: "木匠 / 木工" },
+      { sheet: "01 Occupation", word: "paramedic", pos: "[n.] 名詞", phonetic: "/ˌper.əˈmed.ɪk/", meaning: "緊急救護人員" },
+      { sheet: "01 Occupation", word: "audiologist", pos: "[n.] 名詞", phonetic: "/ˌɔː.diˈɑː.lə.dʒɪst/", meaning: "聽力治療師" },
+      { sheet: "01 Occupation", word: "dietitian", pos: "[n.] 名詞", phonetic: "/ˌdaɪ.əˈtɪʃ.ən/", meaning: "營養師" },
+      { sheet: "01 Occupation", word: "investigator", pos: "[n.] 名詞", phonetic: "/ɪnˈves.tə.ɡeɪ.tɚ/", meaning: "調查員" },
+
+      // === 02 Recreation (30 words) ===
+      { sheet: "02 Recreation", word: "exhibition", pos: "[n.] 名詞", phonetic: "/ˌek.səˈbɪʃ.ən/", meaning: "展覽、展出" },
+      { sheet: "02 Recreation", word: "concert", pos: "[n.] 名詞", phonetic: "/ˈkɑːn.sɚt/", meaning: "音樂會、演唱會" },
+      { sheet: "02 Recreation", word: "amusement", pos: "[n.] 名詞", phonetic: "/əˈmjuːz.mənt/", meaning: "消遣、娛樂" },
+      { sheet: "02 Recreation", word: "festival", pos: "[n.] 名詞", phonetic: "/ˈfes.tə.vəl/", meaning: "慶典、節日" },
+      { sheet: "02 Recreation", word: "museum", pos: "[n.] 名詞", phonetic: "/mjuːˈziː.əm/", meaning: "博物館" },
+      { sheet: "02 Recreation", word: "orchestra", pos: "[n.] 名詞", phonetic: "/ˈɔːr.kə.strə/", meaning: "管弦樂團" },
+      { sheet: "02 Recreation", word: "cinema", pos: "[n.] 名詞", phonetic: "/ˈsɪn.ə.mə/", meaning: "電影院" },
+      { sheet: "02 Recreation", word: "tournament", pos: "[n.] 名詞", phonetic: "/ˈtɝː.nə.mənt/", meaning: "錦標賽、巡迴賽" },
+      { sheet: "02 Recreation", word: "circus", pos: "[n.] 名詞", phonetic: "/ˈsɝː.kəs/", meaning: "馬戲團" },
+      { sheet: "02 Recreation", word: "theater", pos: "[n.] 名詞", phonetic: "/ˈθiː.ə.tɚ/", meaning: "劇院、戲院" },
+      { sheet: "02 Recreation", word: "gallery", pos: "[n.] 名詞", phonetic: "/ˈɡæl.ɚ.i/", meaning: "美術館、藝廊" },
+      { sheet: "02 Recreation", word: "carnival", pos: "[n.] 名詞", phonetic: "/ˈkɑːr.nə.vəl/", meaning: "嘉年華、遊樂會" },
+      { sheet: "02 Recreation", word: "sculpture", pos: "[n.] 名詞", phonetic: "/ˈskʌlp.tʃɚ/", meaning: "雕塑、雕像" },
+      { sheet: "02 Recreation", word: "sightseeing", pos: "[n.] 名詞", phonetic: "/ˈsaɪtˌsiː.ɪŋ/", meaning: "觀光、遊覽" },
+      { sheet: "02 Recreation", word: "recreation", pos: "[n.] 名詞", phonetic: "/ˌrek.riˈeɪ.ʃən/", meaning: "休閒娛樂" },
+      { sheet: "02 Recreation", word: "souvenir", pos: "[n.] 名詞", phonetic: "/ˌsuː.vəˈnɪr/", meaning: "紀念品" },
+      { sheet: "02 Recreation", word: "aquarium", pos: "[n.] 名詞", phonetic: "/əˈkwer.i.əm/", meaning: "水族館" },
+      { sheet: "02 Recreation", word: "adventure", pos: "[n.] 名詞", phonetic: "/ədˈven.tʃɚ/", meaning: "冒險活動" },
+      { sheet: "02 Recreation", word: "broadway", pos: "[n.] 名詞", phonetic: "/ˈbrɑːd.weɪ/", meaning: "百老匯劇院" },
+      { sheet: "02 Recreation", word: "costume", pos: "[n.] 名詞", phonetic: "/ˈkɑː.stuːm/", meaning: "戲服、化妝舞會服裝" },
+      { sheet: "02 Recreation", word: "nightlife", pos: "[n.] 名詞", phonetic: "/ˈnaɪt.laɪf/", meaning: "夜生活" },
+      { sheet: "02 Recreation", word: "fairground", pos: "[n.] 名詞", phonetic: "/ˈfer.ɡraʊnd/", meaning: "露天遊樂場" },
+      { sheet: "02 Recreation", word: "parade", pos: "[n.] 名詞", phonetic: "/pəˈreɪd/", meaning: "遊行" },
+      { sheet: "02 Recreation", word: "performance", pos: "[n.] 名詞", phonetic: "/pɚˈfɔːr.məns/", meaning: "演出、表演" },
+      { sheet: "02 Recreation", word: "aquapark", pos: "[n.] 名詞", phonetic: "/ˈæk.wə.pɑːrk/", meaning: "水上樂園" },
+      { sheet: "02 Recreation", word: "planetarium", pos: "[n.] 名詞", phonetic: "/ˌplæn.ɪˈter.i.əm/", meaning: "天文館" },
+      { sheet: "02 Recreation", word: "picnic", pos: "[n.] 名詞", phonetic: "/ˈpɪk.nɪk/", meaning: "野餐" },
+      { sheet: "02 Recreation", word: "craftwork", pos: "[n.] 名詞", phonetic: "/ˈkræft.wɝːk/", meaning: "手工藝品" },
+      { sheet: "02 Recreation", word: "marina", pos: "[n.] 名詞", phonetic: "/məˈriː.nə/", meaning: "遊艇碼頭" },
+      { sheet: "02 Recreation", word: "resort", pos: "[n.] 名詞", phonetic: "/rɪˈzɔːrt/", meaning: "度假勝地" },
+
+      // === 03 Sports (30 words) ===
+      { sheet: "03 Sports", word: "marathon", pos: "[n.] 名詞", phonetic: "/ˈmær.ə.θɑːn/", meaning: "馬拉松長跑" },
+      { sheet: "03 Sports", word: "badminton", pos: "[n.] 名詞", phonetic: "/ˈbæd.mɪn.tən/", meaning: "羽毛球" },
+      { sheet: "03 Sports", word: "gymnastics", pos: "[n.] 名詞", phonetic: "/dʒɪmˈnæs.tɪks/", meaning: "體操運動" },
+      { sheet: "03 Sports", word: "stadium", pos: "[n.] 名詞", phonetic: "/ˈsteɪ.di.əm/", meaning: "體育館、露天大型運動場" },
+      { sheet: "03 Sports", word: "championship", pos: "[n.] 名詞", phonetic: "/ˈtʃæm.pi.ən.ʃɪp/", meaning: "錦標賽、冠軍頭銜" },
+      { sheet: "03 Sports", word: "athlete", pos: "[n.] 名詞", phonetic: "/ˈæθ.liːt/", meaning: "運動員" },
+      { sheet: "03 Sports", word: "referee", pos: "[n.] 名詞", phonetic: "/ˌref.əˈriː/", meaning: "裁判員" },
+      { sheet: "03 Sports", word: "spectator", pos: "[n.] 名詞", phonetic: "/spekˈteɪ.tɚ/", meaning: "現場觀眾" },
+      { sheet: "03 Sports", word: "opponent", pos: "[n.] 名詞", phonetic: "/əˈpoʊ.nənt/", meaning: "對手、敵手" },
+      { sheet: "03 Sports", word: "trophy", pos: "[n.] 名詞", phonetic: "/ˈtroʊ.fi/", meaning: "獎盃、戰利品" },
+      { sheet: "03 Sports", word: "tournament", pos: "[n.] 名詞", phonetic: "/ˈtɝː.nə.mənt/", meaning: "錦標賽" },
+      { sheet: "03 Sports", word: "volleyball", pos: "[n.] 名詞", phonetic: "/ˈvɑː.li.bɑːl/", meaning: "排球" },
+      { sheet: "03 Sports", word: "archery", pos: "[n.] 名詞", phonetic: "/ˈɑːr.tʃɚ.i/", meaning: "射箭運動" },
+      { sheet: "03 Sports", word: "swimming", pos: "[n.] 名詞", phonetic: "/ˈswɪm.ɪŋ/", meaning: "游泳" },
+      { sheet: "03 Sports", word: "fitness", pos: "[n.] 名詞", phonetic: "/ˈfɪt.nəs/", meaning: "健康、體能健身" },
+      { sheet: "03 Sports", word: "coaching", pos: "[n.] 名詞", phonetic: "/ˈkoʊ.tʃɪŋ/", meaning: "教練訓練指導" },
+      { sheet: "03 Sports", word: "cycling", pos: "[n.] 名詞", phonetic: "/ˈsaɪ.klɪŋ/", meaning: "自行車運動" },
+      { sheet: "03 Sports", word: "aerobics", pos: "[n.] 名詞", phonetic: "/erˈoʊ.bɪks/", meaning: "有氧運動" },
+      { sheet: "03 Sports", word: "skating", pos: "[n.] 名詞", phonetic: "/ˈskeɪ.tɪŋ/", meaning: "溜冰、滑輪" },
+      { sheet: "03 Sports", word: "baseball", pos: "[n.] 名詞", phonetic: "/ˈbeɪs.bɑːl/", meaning: "棒球" },
+      { sheet: "03 Sports", word: "basketball", pos: "[n.] 名詞", phonetic: "/ˈbæs.kət.bɑːl/", meaning: "籃球" },
+      { sheet: "03 Sports", word: "triathlon", pos: "[n.] 名詞", phonetic: "/traɪˈæθ.lɑːn/", meaning: "鐵人三項" },
+      { sheet: "03 Sports", word: "wrestling", pos: "[n.] 名詞", phonetic: "/ˈres.lɪŋ/", meaning: "角力、摔跤" },
+      { sheet: "03 Sports", word: "surfing", pos: "[n.] 名詞", phonetic: "/ˈsɝː.fɪŋ/", meaning: "衝浪運動" },
+      { sheet: "03 Sports", word: "fencing", pos: "[n.] 名詞", phonetic: "/ˈfen.sɪŋ/", meaning: "擊劍運動" },
+      { sheet: "03 Sports", word: "scoreboard", pos: "[n.] 名詞", phonetic: "/ˈskɔːr.bɔːrd/", meaning: "計分板" },
+      { sheet: "03 Sports", word: "quarterback", pos: "[n.] 名詞", phonetic: "/ˈkwɔːr.t̬ɚ.bæk/", meaning: "四分衛 (美式足球)" },
+      { sheet: "03 Sports", word: "playoff", pos: "[n.] 名詞", phonetic: "/ˈpleɪ.ɑːf/", meaning: "季後賽、決賽" },
+      { sheet: "03 Sports", word: "goalkeeper", pos: "[n.] 名詞", phonetic: "/ˈɡoʊlˌkiː.pɚ/", meaning: "守門員" },
+      { sheet: "03 Sports", word: "endurance", pos: "[n.] 名詞", phonetic: "/ɪnˈdʊr.əns/", meaning: "耐力、持久力" },
+
+      // === 04 Events (30 words) ===
+      { sheet: "04 Events", word: "conference", pos: "[n.] 名詞", phonetic: "/ˈkɑːn.fɚ.əns/", meaning: "大型會議、研討會" },
+      { sheet: "04 Events", word: "seminar", pos: "[n.] 名詞", phonetic: "/ˈsem.ə.nɑːr/", meaning: "專題研討會" },
+      { sheet: "04 Events", word: "banquet", pos: "[n.] 名詞", phonetic: "/ˈbæŋ.kwət/", meaning: "宴會、盛宴" },
+      { sheet: "04 Events", word: "ceremony", pos: "[n.] 名詞", phonetic: "/ˈser.ə.mə.ni/", meaning: "典禮、儀式" },
+      { sheet: "04 Events", word: "anniversary", pos: "[n.] 名詞", phonetic: "/ˌæn.əˈvɝː.sɚ.i/", meaning: "週年紀念日" },
+      { sheet: "04 Events", word: "convention", pos: "[n.] 名詞", phonetic: "/kənˈven.ʃən/", meaning: "大會、慣例協定" },
+      { sheet: "04 Events", word: "gala", pos: "[n.] 名詞", phonetic: "/ˈɡeɪ.lə/", meaning: "節慶活動、盛大晚會" },
+      { sheet: "04 Events", word: "reception", pos: "[n.] 名詞", phonetic: "/rɪˈsep.ʃən/", meaning: "歡迎會、接待處" },
+      { sheet: "04 Events", word: "symposium", pos: "[n.] 名詞", phonetic: "/sɪmˈpoʊ.zi.əm/", meaning: "學術研討座談會" },
+      { sheet: "04 Events", word: "workshop", pos: "[n.] 名詞", phonetic: "/ˈwɝːk.ʃɑːp/", meaning: "工作坊、專題研習營" },
+      { sheet: "04 Events", word: "webinar", pos: "[n.] 名詞", phonetic: "/ˈweb.ə.nɑːr/", meaning: "線上網路研討會" },
+      { sheet: "04 Events", word: "summit", pos: "[n.] 名詞", phonetic: "/ˈsʌm.ɪt/", meaning: "高峰會、頂峰" },
+      { sheet: "04 Events", word: "commencement", pos: "[n.] 名詞", phonetic: "/kəˈmens.mənt/", meaning: "畢業典禮、開端" },
+      { sheet: "04 Events", word: "fundraiser", pos: "[n.] 名詞", phonetic: "/ˈfʌndˌreɪ.zɚ/", meaning: "募款活動、籌款者" },
+      { sheet: "04 Events", word: "gathering", pos: "[n.] 名詞", phonetic: "/ˈɡæð.ɚ.ɪŋ/", meaning: "聚會、集會" },
+      { sheet: "04 Events", word: "celebration", pos: "[n.] 名詞", phonetic: "/ˌsel.əˈbreɪ.ʃən/", meaning: "慶祝活動" },
+      { sheet: "04 Events", word: "presentation", pos: "[n.] 名詞", phonetic: "/ˌprez.ənˈteɪ.ʃən/", meaning: "簡報、發表會" },
+      { sheet: "04 Events", word: "inauguration", pos: "[n.] 名詞", phonetic: "/ɪˌnɑː.ɡjəˈreɪ.ʃən/", meaning: "就職典禮、開幕落成儀式" },
+      { sheet: "04 Events", word: "agenda", pos: "[n.] 名詞", phonetic: "/əˈdʒen.də/", meaning: "議程表、待議事項" },
+      { sheet: "04 Events", word: "registration", pos: "[n.] 名詞", phonetic: "/ˌredʒ.əˈstreɪ.ʃən/", meaning: "報名登記、註冊" },
+      { sheet: "04 Events", word: "keynote", pos: "[n.] 名詞", phonetic: "/ˈkiː.noʊt/", meaning: "主旨演講、基調" },
+      { sheet: "04 Events", word: "assembly", pos: "[n.] 名詞", phonetic: "/əˈsem.bli/", meaning: "集會、裝配" },
+      { sheet: "04 Events", word: "forum", pos: "[n.] 名詞", phonetic: "/ˈfɔːr.əm/", meaning: "論壇、座談會" },
+      { sheet: "04 Events", word: "reunion", pos: "[n.] 名詞", phonetic: "/riːˈjuː.njən/", meaning: "同學會、同聚聯誼" },
+      { sheet: "04 Events", word: "parliament", pos: "[n.] 名詞", phonetic: "/ˈpɑːr.lə.mənt/", meaning: "議會會議" },
+      { sheet: "04 Events", word: "orientation", pos: "[n.] 名詞", phonetic: "/ˌɔːr.i.enˈteɪ.ʃən/", meaning: "新生訓練、職前說明培訓" },
+      { sheet: "04 Events", word: "auction", pos: "[n.] 名詞", phonetic: "/ˈɑːk.ʃən/", meaning: "拍賣會" },
+      { sheet: "04 Events", word: "rehearsal", pos: "[n.] 名詞", phonetic: "/rəˈhɝː.səl/", meaning: "彩排、排演" },
+      { sheet: "04 Events", word: "panel", pos: "[n.] 名詞", phonetic: "/ˈpæn.əl/", meaning: "座談專家小組" },
+      { sheet: "04 Events", word: "showcase", pos: "[n.] 名詞", phonetic: "/ˈʃoʊ.keɪs/", meaning: "成果展現、展示櫥窗" },
+
+      // === 05 Shopping (30 words) ===
+      { sheet: "05 Shopping", word: "discount", pos: "[n.] 名詞", phonetic: "/ˈdɪs.kaʊnt/", meaning: "折扣、優惠" },
+      { sheet: "05 Shopping", word: "receipt", pos: "[n.] 名詞", phonetic: "/rɪˈsiːt/", meaning: "收據、發票" },
+      { sheet: "05 Shopping", word: "voucher", pos: "[n.] 名詞", phonetic: "/ˈvaʊ.tʃɚ/", meaning: "商品抵用券、憑證" },
+      { sheet: "05 Shopping", word: "refund", pos: "[n.] 名詞", phonetic: "/ˈriː.fʌnd/", meaning: "退款、償還金" },
+      { sheet: "05 Shopping", word: "warranty", pos: "[n.] 名詞", phonetic: "/ˈwɔːr.ən.t̬i/", meaning: "保固、品質保證書" },
+      { sheet: "05 Shopping", word: "bargain", pos: "[n.] 名詞", phonetic: "/ˈbɑːr.ɡɪn/", meaning: "特價便宜貨；討價還價" },
+      { sheet: "05 Shopping", word: "cashier", pos: "[n.] 名詞", phonetic: "/kæʃˈɪr/", meaning: "收銀員、出納員" },
+      { sheet: "05 Shopping", word: "inventory", pos: "[n.] 名詞", phonetic: "/ˈɪn.vən.tɔːr.i/", meaning: "庫存清單、存貨" },
+      { sheet: "05 Shopping", word: "clearance", pos: "[n.] 名詞", phonetic: "/ˈklɪr.əns/", meaning: "清倉大拍賣" },
+      { sheet: "05 Shopping", word: "wholesale", pos: "[n.] 名詞", phonetic: "/ˈhoʊl.seɪl/", meaning: "批發、批發價" },
+      { sheet: "05 Shopping", word: "merchandise", pos: "[n.] 名詞", phonetic: "/ˈmɝː.tʃən.daɪs/", meaning: "商品、貨物" },
+      { sheet: "05 Shopping", word: "boutique", pos: "[n.] 名詞", phonetic: "/buːˈtiːk/", meaning: "精品店、時裝店" },
+      { sheet: "05 Shopping", word: "customer", pos: "[n.] 名詞", phonetic: "/ˈkʌs.tə.mɚ/", meaning: "顧客、買主" },
+      { sheet: "05 Shopping", word: "checkout", pos: "[n.] 名詞", phonetic: "/ˈtʃek.aʊt/", meaning: "結帳櫃檯、結帳手續" },
+      { sheet: "05 Shopping", word: "installment", pos: "[n.] 名詞", phonetic: "/ɪnˈstɑːl.mənt/", meaning: "分期付款" },
+      { sheet: "05 Shopping", word: "catalog", pos: "[n.] 名詞", phonetic: "/ˈkæt̬.əl.ɑːɡ/", meaning: "商品型錄、目錄" },
+      { sheet: "05 Shopping", word: "retailer", pos: "[n.] 名詞", phonetic: "/ˈriː.teɪ.lɚ/", meaning: "零售商" },
+      { sheet: "05 Shopping", word: "purchase", pos: "[n.] 名詞", phonetic: "/ˈpɝː.tʃəs/", meaning: "購買品、採購" },
+      { sheet: "05 Shopping", word: "coupon", pos: "[n.] 名詞", phonetic: "/ˈkuː.pɑːn/", meaning: "折價優待券" },
+      { sheet: "05 Shopping", word: "promoter", pos: "[n.] 名詞", phonetic: "/prəˈmoʊ.t̬ɚ/", meaning: "促銷員、推廣者" },
+      { sheet: "05 Shopping", word: "supermarket", pos: "[n.] 名詞", phonetic: "/ˈsuː.pɚˌmɑːr.kɪt/", meaning: "超級市場" },
+      { sheet: "05 Shopping", word: "fragrance", pos: "[n.] 名詞", phonetic: "/ˈfreɪ.ɡrəns/", meaning: "香水、香氣" },
+      { sheet: "05 Shopping", word: "trolley", pos: "[n.] 名詞", phonetic: "/ˈtrɑː.li/", meaning: "手推購物車" },
+      { sheet: "05 Shopping", word: "brand", pos: "[n.] 名詞", phonetic: "/brænd/", meaning: "商標、品牌" },
+      { sheet: "05 Shopping", word: "apparel", pos: "[n.] 名詞", phonetic: "/əˈper.əl/", meaning: "服裝、服飾" },
+      { sheet: "05 Shopping", word: "department", pos: "[n.] 名詞", phonetic: "/dɪˈpɑːrt.mənt/", meaning: "百貨部門" },
+      { sheet: "05 Shopping", word: "exchange", pos: "[n.] 名詞", phonetic: "/ɪksˈtʃeɪndʒ/", meaning: "換貨、兌換" },
+      { sheet: "05 Shopping", word: "transaction", pos: "[n.] 名詞", phonetic: "/trænˈzæk.ʃən/", meaning: "交易手續、買賣" },
+      { sheet: "05 Shopping", word: "deliver", pos: "[v.] 動詞", phonetic: "/dɪˈlɪv.ɚ/", meaning: "運送、送遞" },
+      { sheet: "05 Shopping", word: "membership", pos: "[n.] 名詞", phonetic: "/ˈmem.bɚ.ʃɪp/", meaning: "會員資格、會員卡" }
+    ];
+
+    /* ==========================================================
+       2. STATE & PHONICS ENGINE ALGORITHM
+       ========================================================== */
+    let vocabularyList = [];
+    let currentFilteredList = [];
+    let currentRuleFilter = 'all';
+    let currentSheetFilter = 'all';
+    let currentDifficultyFilter = 'all';
+    let currentStatusFilter = 'all';
+
+    // Learning Progress State (in-memory)
+    let masteredWords = new Set();
+    let flaggedWords = new Set();
+
+    // Quiz State
+    let quizQuestions = [];
+    let currentQuestionIndex = 0;
+    let quizScore = 0;
+    let quizHistory = [];
+    let isQuestionAnswered = false;
+
+    // Web Speech API Voice setup
+    let englishVoice = null;
+    function initSpeechSynthesis() {
+      if ('speechSynthesis' in window) {
+        const updateVoices = () => {
+          const voices = window.speechSynthesis.getVoices();
+          englishVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) ||
+                         voices.find(v => v.lang === 'en-US') ||
+                         voices.find(v => v.lang.startsWith('en')) || null;
+        };
+        updateVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = updateVoices;
+        }
+      }
+    }
+    initSpeechSynthesis();
+
+    /**
+     * Syllable splitting helper based on English phonotactics
+     */
+    function splitWordIntoSyllables(word) {
+      if (!word) return [""];
+      const w = word.trim().toLowerCase();
+      if (w.length <= 3) return [w];
+      
+      // Known prefixes and suffixes splitting regex
+      const syllableRegex = /[^aeiouy]*[aeiouy]+(?:[^aeiouy]*$|[^aeiouy](?=[^aeiouy]))?/gi;
+      const chunks = w.match(syllableRegex);
+      if (chunks && chunks.length > 1) {
+        return chunks;
+      }
+      
+      // Fallback chunking
+      const parts = [];
+      for (let i = 0; i < w.length; i += 3) {
+        parts.push(w.substring(i, Math.min(i + 3, w.length)));
+      }
+      return parts.length > 0 ? parts : [w];
+    }
+
+    /**
+     * Algorithmic Phonics Rule Deductions for newly uploaded or default words
+     */
+    function analyzePhonicsForWord(wordStr, meaningStr = "", sheetName = "01 Occupation", phoneticStr = "") {
+      const cleanWord = wordStr.trim().toLowerCase();
+      const rules = [];
+      let category = "vowel-team";
+
+      // 1. Syllables heuristic division
+      const syllables = splitWordIntoSyllables(cleanWord);
+
+      // 2. Check Magic-e: ends with vowel + consonant + e (not ee)
+      if (/[aeiou][b-df-hj-np-tv-z]e$/i.test(cleanWord) && !cleanWord.endsWith("ee")) {
+        rules.push({
+          rule: "Magic-e (長母音)",
+          desc: "字尾不發音的 e 使其前方的母音讀長母音本音標"
+        });
+        category = "magic-e";
+      }
+
+      // 3. Check Vowel teams
+      const vowelTeams = ["ai", "ay", "ea", "ee", "oa", "oi", "oy", "ou", "ow", "ue", "ui"];
+      const foundTeams = vowelTeams.filter(vt => cleanWord.includes(vt));
+      if (foundTeams.length > 0) {
+        rules.push({
+          rule: `雙母音組合 (${foundTeams.join(", ")})`,
+          desc: "母音組合大多發第一個母音的長字母音或平滑雙母音"
+        });
+        if (category !== "magic-e") category = "vowel-team";
+      }
+
+      // 4. Check R-controlled vowels
+      const rVowels = ["ar", "er", "ir", "or", "ur"];
+      const foundR = rVowels.filter(rv => cleanWord.includes(rv));
+      if (foundR.length > 0) {
+        rules.push({
+          rule: `R-控制母音 (${foundR.join(", ")})`,
+          desc: "母音緊接 r 產生捲舌音質改變（如 /ɑːr/, /ɝː/, /ɔːr/）"
+        });
+        category = "r-controlled";
+      }
+
+      // 5. Check Suffixes (-tion, -sion, -ian, -ist, -ment)
+      if (cleanWord.endsWith("tion") || cleanWord.endsWith("sion")) {
+        rules.push({
+          rule: "名詞字尾 -tion / -sion",
+          desc: "固定軟化發音為 /ʃən/ 或 /ʒən/"
+        });
+        category = "suffix-tion";
+      } else if (cleanWord.endsWith("ian")) {
+        rules.push({
+          rule: "專家/身份字尾 -ian",
+          desc: "常見職業專家字尾，接於音節後發 /iən/ 或軟化為 /ʃən/"
+        });
+        category = "suffix-tion";
+      } else if (cleanWord.endsWith("ist")) {
+        rules.push({
+          rule: "職業從事者字尾 -ist",
+          desc: "閉音節短母音 /ɪst/，代表從業人員或專家"
+        });
+        category = "suffix-tion";
+      } else if (cleanWord.endsWith("ment") || cleanWord.endsWith("ness")) {
+        rules.push({
+          rule: "抽象名詞字尾",
+          desc: "字尾母音常弱化為非重音 schwa /ə/ 音"
+        });
+        category = "suffix-tion";
+      }
+
+      // Fallback closed syllable rule
+      if (rules.length === 0) {
+        rules.push({
+          rule: "閉音節短母音 (Closed Syllable)",
+          desc: "輔音包夾的母音發標準短母音 (Short Vowel)"
+        });
+      }
+
+      // Calculate Difficulty Level based on syllable length & phonics complexity
+      let difficulty = "beginner";
+      if (syllables.length >= 4 || cleanWord.length >= 11) {
+        difficulty = "advanced";
+      } else if (syllables.length === 3 || cleanWord.length >= 7) {
+        difficulty = "intermediate";
+      } else {
+        difficulty = "beginner";
+      }
+
+      return {
+        word: cleanWord,
+        phonetic: phoneticStr || `/${cleanWord}/`,
+        meaning: meaningStr || "多益必考核心單字",
+        partOfSpeech: "n.",
+        sheet: sheetName,
+        syllables: syllables,
+        phonicsRules: rules,
+        category: category,
+        difficulty: difficulty,
+        example: `It is essential to memorize "${cleanWord}" for the TOEIC test.`
+      };
+    }
+
+    // Initialize 150 words from the 5 themes
+    function initDefaultData() {
+      vocabularyList = RAW_TOEIC_WORDS.map(item => {
+        const analyzed = analyzePhonicsForWord(item.word, item.meaning, item.sheet, item.phonetic);
+        analyzed.partOfSpeech = item.pos;
+        return analyzed;
+      });
+      currentFilteredList = [...vocabularyList];
+    }
+    initDefaultData();
+
+    /* ==========================================================
+       3. SPEECH SYNTHESIS & SOUND EFFECTS
+       ========================================================== */
+    function speak(text, rate = null, onEnd = null) {
+      if (!('speechSynthesis' in window)) {
+        showToast("您的瀏覽器暫不支援語音合成發音", "warning");
+        return;
+      }
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+      
+      const rateSelector = document.getElementById('voice-rate');
+      const selectedRate = rateSelector ? parseFloat(rateSelector.value) : 0.9;
+      utterance.rate = rate !== null ? rate : selectedRate;
+      utterance.pitch = 1.0;
+
+      if (onEnd) {
+        utterance.onend = onEnd;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakSyllable(syllable, elem = null) {
+      if (elem) {
+        elem.classList.add('playing-pulse', 'ring-2', 'ring-blue-400');
+      }
+      speak(syllable, 0.75, () => {
+        if (elem) {
+          elem.classList.remove('playing-pulse', 'ring-2', 'ring-blue-400');
+        }
+      });
+      playBeep(480, 0.05);
+    }
+
+    function speakWord(word, elem = null) {
+      if (elem) {
+        elem.classList.add('playing-pulse');
+      }
+      speak(word, null, () => {
+        if (elem) {
+          elem.classList.remove('playing-pulse');
+        }
+      });
+    }
+
+    function speakSyllablesSequence(syllablesArr, currentIndex = 0) {
+      if (!syllablesArr || currentIndex >= syllablesArr.length) return;
+      speak(syllablesArr[currentIndex], 0.75, () => {
+        setTimeout(() => {
+          speakSyllablesSequence(syllablesArr, currentIndex + 1);
+        }, 250);
+      });
+    }
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playBeep(freq = 520, duration = 0.08) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSuccessChime() {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(0.12, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.25);
+        });
+      } catch (e) {}
+    }
+
+    function playErrorBuzzer() {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.setValueAtTime(140, now + 0.12);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } catch (e) {}
+    }
+
+    /* ==========================================================
+       4. UI RENDERING: LEARNING VIEW & PHONICS CARDS
+       ========================================================== */
+    function renderWordCards() {
+      const container = document.getElementById('words-grid');
+      const emptyState = document.getElementById('empty-state');
+      const badge = document.getElementById('vocab-count-badge');
+      const sheetBadge = document.getElementById('sheet-count-badge');
+
+      badge.textContent = currentFilteredList.length;
+
+      // Count distinct sheets loaded
+      const uniqueSheets = new Set(vocabularyList.map(v => v.sheet || "預設"));
+      if (sheetBadge) sheetBadge.textContent = uniqueSheets.size;
+
+      // Update progress stats
+      updateProgressStats();
+
+      if (currentFilteredList.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = currentFilteredList.map((item, idx) => {
+        const isMastered = masteredWords.has(item.word);
+        const isFlagged = flaggedWords.has(item.word);
+
+        const difficultyLabels = {
+          beginner: { text: "基礎", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+          intermediate: { text: "進階", class: "bg-amber-100 text-amber-700 border-amber-200" },
+          advanced: { text: "挑戰", class: "bg-rose-100 text-rose-700 border-rose-200" }
+        };
+        const diffConfig = difficultyLabels[item.difficulty] || difficultyLabels.beginner;
+
+        const syllablesHtml = item.syllables.map((syl, sIdx) => {
+          const colors = [
+            'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200',
+            'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200',
+            'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-200',
+            'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200',
+            'bg-rose-100 text-rose-800 hover:bg-rose-200 border-rose-200'
+          ];
+          const colorClass = colors[sIdx % colors.length];
+
+          return `
+            <button onclick="speakSyllable('${syl}', this)" 
+              title="點擊聽音節發音: /${syl}/" 
+              class="syllable-tag ${colorClass} border text-xs sm:text-sm font-extrabold px-2.5 py-1 rounded-xl shadow-xs flex items-center space-x-1 cursor-pointer">
+              <span>${syl}</span>
+              <i class="fa-solid fa-volume-low text-[10px] opacity-60"></i>
+            </button>
+          `;
+        }).join('<span class="text-slate-300 font-bold self-center">•</span>');
+
+        const rulesHtml = item.phonicsRules.map(r => `
+          <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-xs">
+            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-500 text-[11px]"></i>
+              ${r.rule}
+            </span>
+            <p class="text-slate-500 mt-1 leading-normal">${r.desc}</p>
+          </div>
+        `).join('');
+
+        return `
+          <div class="glass-card bg-white rounded-3xl p-5 border ${isMastered ? 'border-emerald-300 bg-emerald-50/20' : isFlagged ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-100">
+                    <i class="fa-regular fa-folder mr-1"></i>${item.sheet || '多益核心'}
+                  </span>
+                  <span class="${diffConfig.class} text-[10px] font-bold px-2 py-0.5 rounded-md border">
+                    ${diffConfig.text}
+                  </span>
+                </div>
+                <!-- Learning Status Actions -->
+                <div class="flex items-center space-x-1">
+                  <button onclick="toggleMastered('${item.word}')" 
+                    title="${isMastered ? '取消已掌握標記' : '標記為已掌握'}"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition ${isMastered ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                  <button onclick="toggleFlagged('${item.word}')" 
+                    title="${isFlagged ? '移除加強清單' : '加入需加強清單'}"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition ${isFlagged ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'}">
+                    <i class="fa-solid fa-bookmark"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Header: Word, Phonics pronunciation -->
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <h2 class="text-xl sm:text-2xl font-black text-slate-900 font-phonics group-hover:text-blue-600 transition-colors">
+                    ${item.word}
+                  </h2>
+                  <span class="text-xs text-slate-400 font-mono tracking-wide">${item.phonetic || ''}</span>
+                </div>
+
+                <!-- Pronounce Full Word Button -->
+                <button onclick="speakWord('${item.word}', this)" 
+                  class="shrink-0 w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition transform active:scale-90 flex items-center justify-center shadow-xs" 
+                  title="全字發音">
+                  <i class="fa-solid fa-volume-high text-base"></i>
+                </button>
+              </div>
+
+              <!-- Meaning -->
+              <p class="text-sm font-bold text-slate-700 mb-3.5 pb-2.5 border-b border-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-language text-blue-500"></i>
+                ${item.meaning}
+              </p>
+
+              <!-- Syllables decomposition bar -->
+              <div class="mb-4">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>自然發音音節拆解 (${item.syllables.length} 音節)</span>
+                  <button onclick="speakSyllablesSequence(${JSON.stringify(item.syllables).replace(/"/g, '&quot;')})" 
+                    class="text-blue-600 hover:text-blue-700 text-[11px] flex items-center gap-1 font-semibold">
+                    <i class="fa-solid fa-play text-[9px]"></i>連貫分音
+                  </button>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                  ${syllablesHtml}
+                </div>
+              </div>
+
+              <!-- Phonics Rule Explanations -->
+              <div class="space-y-1.5 mb-3">
+                ${rulesHtml}
+              </div>
+            </div>
+
+            <!-- Example sentence footer -->
+            ${item.example ? `
+              <div class="pt-3 border-t border-slate-100 text-xs text-slate-500 italic flex items-start gap-1.5">
+                <i class="fa-solid fa-quote-left text-slate-300 text-xs shrink-0 mt-0.5"></i>
+                <span>${item.example}</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ==========================================================
+       5. FILTERING, SEARCHING & LEARNING PROGRESS LOGIC
+       ========================================================== */
+    function toggleMastered(word) {
+      if (masteredWords.has(word)) {
+        masteredWords.delete(word);
+        showToast(`已取消「${word}」的掌握標記`, "info");
+      } else {
+        masteredWords.add(word);
+        flaggedWords.delete(word); // auto remove from needs practice
+        showToast(`已將「${word}」標記為已掌握！`, "success");
+        playSuccessChime();
+      }
+      applyFilters();
+    }
+
+    function toggleFlagged(word) {
+      if (flaggedWords.has(word)) {
+        flaggedWords.delete(word);
+        showToast(`已將「${word}」移出需加強清單`, "info");
+      } else {
+        flaggedWords.add(word);
+        masteredWords.delete(word);
+        showToast(`已將「${word}」加入需加強清單！`, "warning");
+      }
+      applyFilters();
+    }
+
+    function updateProgressStats() {
+      const total = vocabularyList.length;
+      const mastered = masteredWords.size;
+      const flagged = flaggedWords.size;
+      const percentage = total > 0 ? Math.round((mastered / total) * 100) : 0;
+
+      const masteredPercent = total > 0 ? (mastered / total) * 100 : 0;
+      const flaggedPercent = total > 0 ? (flagged / total) * 100 : 0;
+
+      const progressText = document.getElementById('progress-percentage');
+      const statMastered = document.getElementById('stat-mastered-count');
+      const statFlagged = document.getElementById('stat-flagged-count');
+      const statTotal = document.getElementById('stat-total-count');
+      const barMastered = document.getElementById('progress-bar-mastered');
+      const barFlagged = document.getElementById('progress-bar-flagged');
+
+      if (progressText) progressText.textContent = `${percentage}%`;
+      if (statMastered) statMastered.textContent = mastered;
+      if (statFlagged) statFlagged.textContent = flagged;
+      if (statTotal) statTotal.textContent = total;
+      if (barMastered) barMastered.style.width = `${masteredPercent}%`;
+      if (barFlagged) barFlagged.style.width = `${flaggedPercent}%`;
+    }
+
+    function resetLearningProgress() {
+      showCustomModal(
+        "重置學習進度？",
+        "確定要清空目前已記錄的所有已掌握與需加強單字標記嗎？",
+        () => {
+          masteredWords.clear();
+          flaggedWords.clear();
+          applyFilters();
+          showToast("已成功重置單字學習進度", "info");
+        }
+      );
+    }
+
+    function handleSearchFilter() {
+      const query = document.getElementById('search-input').value.trim().toLowerCase();
+      const clearBtn = document.getElementById('clear-search-btn');
+
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      applyFilters();
+    }
+
+    function setRuleFilter(ruleType) {
+      currentRuleFilter = ruleType;
+      document.querySelectorAll('.rule-chip').forEach(chip => {
+        if (chip.getAttribute('data-rule') === ruleType) {
+          chip.classList.remove('bg-slate-100', 'text-slate-600');
+          chip.classList.add('bg-blue-600', 'text-white');
+        } else {
+          chip.classList.remove('bg-blue-600', 'text-white');
+          chip.classList.add('bg-slate-100', 'text-slate-600');
+        }
+      });
+
+      applyFilters();
+    }
+
+    function handleSheetFilterChange(sheetName) {
+      currentSheetFilter = sheetName;
+      applyFilters();
+    }
+
+    function handleDifficultyFilterChange(diffLevel) {
+      currentDifficultyFilter = diffLevel;
+      applyFilters();
+    }
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.status-tab').forEach(tab => {
+        if (tab.getAttribute('data-status') === status) {
+          tab.className = "status-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition";
+        } else {
+          tab.className = "status-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition";
+        }
+      });
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const query = document.getElementById('search-input') ? document.getElementById('search-input').value.trim().toLowerCase() : '';
+      const ruleType = currentRuleFilter;
+      const sheetName = currentSheetFilter;
+      const diffLevel = currentDifficultyFilter;
+      const status = currentStatusFilter;
+
+      currentFilteredList = vocabularyList.filter(item => {
+        const matchesQuery = !query || 
+          item.word.toLowerCase().includes(query) ||
+          item.meaning.toLowerCase().includes(query) ||
+          (item.phonicsRules && item.phonicsRules.some(r => r.rule.toLowerCase().includes(query) || r.desc.toLowerCase().includes(query))) ||
+          (item.syllables && item.syllables.some(s => s.toLowerCase().includes(query)));
+
+        const matchesRule = ruleType === 'all' || item.category === ruleType;
+        const matchesSheet = sheetName === 'all' || (item.sheet && item.sheet.includes(sheetName));
+        const matchesDiff = diffLevel === 'all' || item.difficulty === diffLevel;
+
+        let matchesStatus = true;
+        if (status === 'mastered') {
+          matchesStatus = masteredWords.has(item.word);
+        } else if (status === 'flagged') {
+          matchesStatus = flaggedWords.has(item.word);
+        } else if (status === 'unlearned') {
+          matchesStatus = !masteredWords.has(item.word) && !flaggedWords.has(item.word);
+        }
+
+        return matchesQuery && matchesRule && matchesSheet && matchesDiff && matchesStatus;
+      });
+
+      renderWordCards();
+    }
+
+    /**
+     * Enhanced Excel / CSV File Parsing via SheetJS (XLSX)
+     * Reads ALL Sheets in the workbook (totaling 150+ words across sheets)
+     */
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            showToast("Excel 檔案中未發現任何工作表", "warning");
+            return;
+          }
+
+          const parsedWords = [];
+          const sheetSelect = document.getElementById('sheet-filter-select');
+          const detectedSheets = [];
+
+          // Loop through EVERY sheet in the uploaded Excel workbook
+          workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            if (!jsonRows || jsonRows.length === 0) return;
+            detectedSheets.push(sheetName);
+
+            // Dynamically locate column indices with trimmed strings
+            let wordColIdx = 1;
+            let posColIdx = -1;
+            let meaningColIdx = 4;
+            let phoneticColIdx = 3;
+
+            // Check header row for flexible matching
+            const headerRow = jsonRows[0].map(cell => String(cell || '').trim().toLowerCase());
+            let startIndex = 0;
+
+            headerRow.forEach((colName, idx) => {
+              if (colName.includes('單字') || colName.includes('word') || colName.includes('英文')) {
+                wordColIdx = idx;
+                startIndex = 1;
+              } else if (colName.includes('詞性') || colName.includes('pos')) {
+                posColIdx = idx;
+                startIndex = 1;
+              } else if (colName.includes('中文') || colName.includes('meaning') || colName.includes('解釋') || colName.includes('釋義')) {
+                meaningColIdx = idx;
+                startIndex = 1;
+              } else if (colName.includes('音標') || colName.includes('phonetic') || colName.includes('發音')) {
+                phoneticColIdx = idx;
+                startIndex = 1;
+              }
+            });
+
+            for (let i = startIndex; i < jsonRows.length; i++) {
+              const row = jsonRows[i];
+              if (!row || row.length === 0) continue;
+
+              const rawWord = String(row[wordColIdx] || '').trim();
+              const rawMeaning = meaningColIdx >= 0 ? String(row[meaningColIdx] || '').trim() : '';
+              const rawPhonetic = phoneticColIdx >= 0 ? String(row[phoneticColIdx] || '').trim() : '';
+              const rawPos = posColIdx >= 0 ? String(row[posColIdx] || '').trim() : '[n.]';
+
+              if (rawWord && /^[a-zA-Z\s\-']+$/.test(rawWord) && rawWord.length >= 2) {
+                const item = analyzePhonicsForWord(rawWord, rawMeaning, sheetName, rawPhonetic);
+                item.partOfSpeech = rawPos;
+                parsedWords.push(item);
+              }
+            }
+          });
+
+          if (parsedWords.length > 0) {
+            // Replace or merge with parsed words
+            vocabularyList = parsedWords;
+
+            // Update Sheet Select Dropdown dynamically
+            if (sheetSelect && detectedSheets.length > 0) {
+              sheetSelect.innerHTML = `<option value="all">🌟 全部主題 (共 ${detectedSheets.length} 個工作表)</option>` +
+                detectedSheets.map(s => `<option value="${s}">📁 ${s}</option>`).join('');
+            }
+
+            currentFilteredList = [...vocabularyList];
+            currentSheetFilter = 'all';
+            renderWordCards();
+            showToast(`成功匯入 ${workbook.SheetNames.length} 個工作表，共 ${parsedWords.length} 個多益單字！`, "success");
+            playSuccessChime();
+          } else {
+            showToast("未能從 Excel 中辨識出有效單字，請檢查檔案格式", "warning");
+          }
+
+        } catch (error) {
+          console.error("Excel parse error:", error);
+          showToast("解析 Excel 檔案失敗，請確認檔案格式是否正確", "error");
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+      event.target.value = "";
+    }
+
+    /* ==========================================================
+       6. 10-QUESTION RANDOM VOCABULARY & PHONICS QUIZ ENGINE
+       ========================================================== */
+    function startQuiz() {
+      // Draw from current filtered list if available, or entire vocabulary
+      const candidateList = (currentFilteredList.length >= 10) ? currentFilteredList : vocabularyList;
+
+      if (candidateList.length < 4) {
+        showToast("單字庫數量不足 4 個，無法組成測驗題目", "warning");
+        return;
+      }
+
+      document.getElementById('quiz-start-screen').classList.add('hidden');
+      document.getElementById('quiz-result-screen').classList.add('hidden');
+      document.getElementById('quiz-playing-screen').classList.remove('hidden');
+
+      currentQuestionIndex = 0;
+      quizScore = 0;
+      quizHistory = [];
+      isQuestionAnswered = false;
+
+      // Randomly pick 10 unique target words
+      const shuffledVocab = [...candidateList].sort(() => 0.5 - Math.random());
+      const selectedWords = shuffledVocab.slice(0, Math.min(10, shuffledVocab.length));
+
+      const quizTypePref = document.querySelector('input[name="quiz-type"]:checked')?.value || 'audio-meaning';
+
+      quizQuestions = selectedWords.map((target, qIdx) => {
+        const otherWords = candidateList.filter(w => w.word !== target.word).sort(() => 0.5 - Math.random());
+        const distractors = otherWords.slice(0, 3);
+        const options = [target, ...distractors].sort(() => 0.5 - Math.random());
+
+        let qType = "audio-to-meaning";
+        if (quizTypePref === 'mixed') {
+          const types = ["audio-to-meaning", "audio-to-word", "syllable-rule", "rule-deduction"];
+          qType = types[qIdx % types.length];
+        } else if (quizTypePref === 'listening') {
+          qType = "audio-to-word";
+        } else {
+          qType = "audio-to-meaning";
+        }
+
+        return {
+          id: qIdx + 1,
+          target: target,
+          options: options,
+          type: qType
+        };
+      });
+
+      renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+      isQuestionAnswered = false;
+      const q = quizQuestions[currentQuestionIndex];
+      const totalQ = quizQuestions.length;
+
+      document.getElementById('quiz-current-num').textContent = currentQuestionIndex + 1;
+      document.getElementById('quiz-score-num').textContent = quizScore;
+      const progressPercent = ((currentQuestionIndex + 1) / totalQ) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${progressPercent}%`;
+
+      const feedbackBox = document.getElementById('quiz-feedback-box');
+      feedbackBox.classList.add('hidden');
+      // Reset feedback elements to prevent any previous question content bleeding through
+      document.getElementById('feedback-title').textContent = '';
+      document.getElementById('feedback-subtitle').textContent = '';
+      document.getElementById('feedback-syllables-list').innerHTML = '';
+      document.getElementById('feedback-rule-text').innerHTML = '';
+      document.getElementById('feedback-meaning-text').textContent = '';
+
+      const badgeElem = document.getElementById('quiz-question-type-badge');
+      const titleElem = document.getElementById('quiz-question-title');
+      const hintBox = document.getElementById('quiz-hint-box');
+      const optionsGrid = document.getElementById('quiz-options-grid');
+
+      if (q.type === 'audio-to-meaning') {
+        badgeElem.textContent = `🎧 聽音選中文字 • ${q.target.sheet || '多益'}`;
+        badgeElem.className = "bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full";
+        titleElem.innerHTML = "請點擊語音按鈕聆聽發音，選出對應的<span class='text-blue-600 underline decoration-2 underline-offset-2'>正確中文意思</span>：";
+        hintBox.innerHTML = `
+          <div class="text-slate-600 space-y-1">
+            <span class="inline-flex items-center gap-1 font-semibold text-blue-600">
+              <i class="fa-solid fa-volume-high"></i> 請點擊「播放全字發音」或「音節慢速發音」仔細聆聽
+            </span>
+            <div class="text-[11px] text-slate-400">音節提示：共 ${q.target.syllables.length} 個音節 (${q.target.syllables.map(s => `[${s}]`).join(" + ")})</div>
+          </div>
+        `;
+      } else if (q.type === 'audio-to-word') {
+        badgeElem.textContent = `聽力拼讀測驗 • ${q.target.sheet || '多益'}`;
+        badgeElem.className = "bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full";
+        titleElem.innerHTML = "請點擊按鈕聆聽發音，選出符合音節拼讀的正確單字：";
+        hintBox.innerHTML = `
+          <div class="text-slate-600">
+            <span class="inline-flex items-center gap-1 font-semibold text-blue-600">
+              <i class="fa-solid fa-volume-high"></i> 請點選上方按鈕播放全字或音節發音
+            </span>
+            <div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>
+          </div>
+        `;
+      } else if (q.type === 'syllable-rule') {
+        badgeElem.textContent = `音節拆解測驗 • ${q.target.sheet || '多益'}`;
+        badgeElem.className = "bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full";
+        titleElem.innerHTML = `觀察音節分段拼讀：<span class="font-phonics text-indigo-700 tracking-wider font-extrabold bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">${q.target.syllables.join(" • ")}</span>，選出正確單字：`;
+        hintBox.innerHTML = `
+          <div class="text-slate-600">
+            <span class="font-bold text-indigo-700">音節組合拼讀：</span>
+            <span>${q.target.syllables.map(s => `[${s}]`).join(" + ")}</span>
+            <div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>
+          </div>
+        `;
+      } else {
+        badgeElem.textContent = `自然發音推導 • ${q.target.sheet || '多益'}`;
+        badgeElem.className = "bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full";
+        const ruleName = q.target.phonicsRules[0]?.rule || "自然發音核心規則";
+        titleElem.innerHTML = `單字含有自然發音規則：<span class="text-emerald-700 font-extrabold">「${ruleName}」</span>，中文為「${q.target.meaning}」的單字是？`;
+        hintBox.innerHTML = `
+          <div class="text-slate-600">
+            <span class="font-bold text-emerald-700">規則特徵：</span>
+            <span>${q.target.phonicsRules[0]?.desc || '請聽音節發音找出對應多益單字'}</span>
+          </div>
+        `;
+      }
+
+      optionsGrid.innerHTML = q.options.map((opt, oIdx) => {
+        const isAudioToMeaning = q.type === 'audio-to-meaning';
+        const primaryText = isAudioToMeaning ? opt.meaning : opt.word;
+        const subText = isAudioToMeaning ? `${opt.partOfSpeech || ''}` : opt.meaning;
+
+        return `
+          <button onclick="handleOptionSelect('${opt.word}', this)" 
+            data-word="${opt.word}"
+            id="opt-btn-${opt.word.replace(/[^a-zA-Z0-9]/g, '_')}"
+            class="quiz-option-btn text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 bg-white transition-all duration-200 group flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="w-7 h-7 rounded-xl bg-slate-100 group-hover:bg-blue-500 group-hover:text-white text-slate-600 flex items-center justify-center font-bold text-xs transition">
+                ${String.fromCharCode(65 + oIdx)}
+              </span>
+              <div>
+                <div class="font-extrabold text-base text-slate-800 group-hover:text-blue-700 font-sans transition">
+                  ${primaryText}
+                </div>
+                <div class="text-xs text-slate-400 font-normal">
+                  ${subText}
+                </div>
+              </div>
+            </div>
+            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden opt-correct-icon"></i>
+            <i class="fa-solid fa-circle-xmark text-rose-500 text-xl hidden opt-wrong-icon"></i>
+          </button>
+        `;
+      }).join('');
+
+      setTimeout(() => {
+        playCurrentQuestionWord();
+      }, 400);
+    }
+
+    function playCurrentQuestionWord() {
+      const q = quizQuestions[currentQuestionIndex];
+      if (q) speakWord(q.target.word);
+    }
+
+    function playCurrentQuestionSyllables() {
+      const q = quizQuestions[currentQuestionIndex];
+      if (q) speakSyllablesSequence(q.target.syllables);
+    }
+
+    function playCurrentQuestionAudio() {
+      playCurrentQuestionWord();
+    }
+
+    /* ==========================================================
+       7. ANSWER VERIFICATION & INSTANT EXPLANATION
+       ========================================================== */
+    function handleOptionSelect(selectedWord, buttonElem) {
+      if (isQuestionAnswered) return;
+      isQuestionAnswered = true;
+
+      const q = quizQuestions[currentQuestionIndex];
+      const isCorrect = selectedWord === q.target.word;
+      
+      document.querySelectorAll('.quiz-option-btn').forEach(btn => {
+        btn.classList.add('pointer-events-none');
+      });
+
+      // Highlight the correct answer button with green border
+      const targetBtn = document.querySelector(`.quiz-option-btn[data-word="${q.target.word}"]`) || 
+                        document.getElementById(`opt-btn-${q.target.word.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      if (targetBtn) {
+        targetBtn.classList.remove('border-slate-200', 'hover:border-blue-400', 'bg-white');
+        targetBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'ring-2', 'ring-emerald-400');
+        targetBtn.querySelector('.opt-correct-icon')?.classList.remove('hidden');
+      }
+
+      if (isCorrect) {
+        quizScore += 1;
+        document.getElementById('quiz-score-num').textContent = quizScore;
+        playSuccessChime();
+      } else {
+        buttonElem.classList.remove('border-slate-200', 'bg-white');
+        buttonElem.classList.add('border-rose-500', 'bg-rose-50', 'ring-2', 'ring-rose-400');
+        buttonElem.querySelector('.opt-wrong-icon')?.classList.remove('hidden');
+        playErrorBuzzer();
+      }
+
+      quizHistory.push({
+        question: q,
+        selectedWord: selectedWord,
+        isCorrect: isCorrect
+      });
+
+      showFeedbackBox(isCorrect, q.target, selectedWord);
+    }
+
+    function showFeedbackBox(isCorrect, target, selectedWord) {
+      const q = quizQuestions[currentQuestionIndex];
+      const box = document.getElementById('quiz-feedback-box');
+      const icon = document.getElementById('feedback-icon');
+      const title = document.getElementById('feedback-title');
+      const subtitle = document.getElementById('feedback-subtitle');
+      const ruleText = document.getElementById('feedback-rule-text');
+      const meaningText = document.getElementById('feedback-meaning-text');
+      const syllablesList = document.getElementById('feedback-syllables-list');
+      const nextBtn = document.getElementById('quiz-next-btn');
+
+      box.classList.remove('hidden');
+
+      if (isCorrect) {
+        box.className = "rounded-2xl p-5 border border-emerald-300 bg-emerald-50/70 transition-all duration-300";
+        icon.className = "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white font-bold bg-emerald-500";
+        icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+        title.className = "font-extrabold text-base text-emerald-800";
+        title.textContent = "回答正確！太棒了！";
+        subtitle.className = "text-xs mt-0.5 text-emerald-700";
+        subtitle.textContent = `正確聽辨出「${target.word}」的中文為「${target.meaning}」。`;
+      } else {
+        const selectedOpt = q ? q.options.find(o => o.word === selectedWord) : null;
+        const wrongChoiceDisplay = (q && q.type === 'audio-to-meaning')
+          ? `「${selectedOpt ? selectedOpt.meaning : selectedWord}」` 
+          : `「${selectedWord}」`;
+
+        box.className = "rounded-2xl p-5 border border-rose-300 bg-rose-50/90 transition-all duration-300";
+        icon.className = "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white font-bold bg-rose-500";
+        icon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        title.className = "font-extrabold text-base text-rose-800";
+        title.textContent = `答錯囉！正確答案是：${target.meaning} (${target.word})`;
+        subtitle.className = "text-xs mt-0.5 text-rose-700";
+        subtitle.textContent = `您誤選了 ${wrongChoiceDisplay}。請立即透過下方音節拼讀進行發音糾正：`;
+      }
+
+      syllablesList.innerHTML = target.syllables.map(syl => `
+        <button onclick="speakSyllable('${syl}', this)" 
+          class="bg-blue-100 hover:bg-blue-200 text-blue-900 border border-blue-300 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center space-x-1 cursor-pointer transition">
+          <span>${syl}</span>
+          <i class="fa-solid fa-volume-low text-[10px] text-blue-500"></i>
+        </button>
+      `).join('<span class="text-slate-400 font-bold self-center">•</span>');
+
+      ruleText.innerHTML = target.phonicsRules.map(r => `<strong>${r.rule}</strong>：${r.desc}`).join("<br>");
+      meaningText.textContent = `${target.meaning} (${target.phonetic})`;
+
+      const feedbackAudioBtn = document.getElementById('btn-feedback-audio');
+      feedbackAudioBtn.onclick = () => {
+        speakWord(target.word);
+      };
+
+      if (currentQuestionIndex >= quizQuestions.length - 1) {
+        nextBtn.innerHTML = `<span>查看測驗成績</span><i class="fa-solid fa-trophy ml-1.5"></i>`;
+      } else {
+        nextBtn.innerHTML = `<span>下一題</span><i class="fa-solid fa-arrow-right ml-1.5"></i>`;
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < quizQuestions.length - 1) {
+        currentQuestionIndex += 1;
+        renderCurrentQuestion();
+      } else {
+        showQuizResults();
+      }
+    }
+
+    /* ==========================================================
+       8. QUIZ RESULTS & WRONG ANSWERS REVIEW
+       ========================================================== */
+    function showQuizResults() {
+      document.getElementById('quiz-playing-screen').classList.add('hidden');
+      const resultScreen = document.getElementById('quiz-result-screen');
+      resultScreen.classList.remove('hidden');
+
+      const total = quizQuestions.length;
+      const score = Math.round((quizScore / total) * 100);
+      const accuracy = `${score}%`;
+
+      document.getElementById('result-final-score').textContent = score;
+      document.getElementById('result-correct-count').textContent = quizScore;
+      document.getElementById('result-accuracy').textContent = accuracy;
+
+      const badgeIcon = document.getElementById('result-badge-icon');
+      const encourageMsg = document.getElementById('result-encourage-msg');
+
+      if (score >= 90) {
+        badgeIcon.className = "w-24 h-24 mx-auto rounded-3xl bg-amber-100 text-amber-500 flex items-center justify-center text-4xl shadow-inner";
+        badgeIcon.innerHTML = '<i class="fa-solid fa-crown text-amber-500"></i>';
+        encourageMsg.textContent = "多益自然發音大師！您已熟練掌握這 150 個核心單字的音節聽讀規則！";
+        playSuccessChime();
+      } else if (score >= 60) {
+        badgeIcon.className = "w-24 h-24 mx-auto rounded-3xl bg-blue-100 text-blue-600 flex items-center justify-center text-4xl shadow-inner";
+        badgeIcon.innerHTML = '<i class="fa-solid fa-medal text-blue-600"></i>';
+        encourageMsg.textContent = "表現非常優秀！針對少數答錯的單字，多聽幾次音節分段發音即可完全掌握。";
+      } else {
+        badgeIcon.className = "w-24 h-24 mx-auto rounded-3xl bg-rose-100 text-rose-500 flex items-center justify-center text-4xl shadow-inner";
+        badgeIcon.innerHTML = '<i class="fa-solid fa-book-open-reader text-rose-500"></i>';
+        encourageMsg.textContent = "別灰心！自然發音需要多聽多拼讀。請點選下方錯題音節加強複習！";
+      }
+
+      const wrongList = quizHistory.filter(h => !h.isCorrect);
+      const wrongContainer = document.getElementById('wrong-answers-container');
+      const wrongListElem = document.getElementById('wrong-answers-list');
+      const wrongCountBadge = document.getElementById('wrong-count-badge');
+
+      wrongCountBadge.textContent = wrongList.length;
+
+      if (wrongList.length === 0) {
+        wrongContainer.classList.add('hidden');
+      } else {
+        wrongContainer.classList.remove('hidden');
+        wrongListElem.innerHTML = wrongList.map(item => {
+          const target = item.question.target;
+          return `
+            <div class="bg-rose-50/50 border border-rose-200 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-rose-700 font-phonics text-sm">${target.word}</span>
+                  <span class="text-slate-400 font-mono">${target.phonetic}</span>
+                  <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded">誤選: ${item.selectedWord}</span>
+                </div>
+                <div class="text-slate-600">${target.meaning}</div>
+                <div class="text-slate-500 text-[11px]">
+                  音節: <strong class="text-slate-700">${target.syllables.join(" • ")}</strong> | 規則: ${target.phonicsRules[0]?.rule || '自然發音'}
+                </div>
+              </div>
+              <button onclick="speakWord('${target.word}', this)" class="shrink-0 w-8 h-8 rounded-xl bg-white border border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white transition flex items-center justify-center shadow-xs">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    /* ==========================================================
+       9. MODAL, TOAST NOTIFICATION & TAB UTILITIES
+       ========================================================== */
+    function switchTab(tabName) {
+      const learnTab = document.getElementById('tab-learn');
+      const quizTab = document.getElementById('tab-quiz');
+      const learnNavBtn = document.getElementById('nav-learn-btn');
+      const quizNavBtn = document.getElementById('nav-quiz-btn');
+
+      if (tabName === 'learn') {
+        learnTab.classList.remove('hidden');
+        quizTab.classList.add('hidden');
+
+        learnNavBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-blue-600 shadow-sm";
+        quizNavBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900";
+      } else {
+        learnTab.classList.add('hidden');
+        quizTab.classList.remove('hidden');
+
+        quizNavBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-blue-600 shadow-sm";
+        learnNavBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900";
+
+        if (quizQuestions.length === 0 || document.getElementById('quiz-result-screen').classList.contains('hidden') === false) {
+          document.getElementById('quiz-start-screen').classList.remove('hidden');
+          document.getElementById('quiz-playing-screen').classList.add('hidden');
+        }
+      }
+    }
+
+    function confirmExitQuiz() {
+      showCustomModal(
+        "確定退出測驗？",
+        "目前正在進行測驗，退出後當前進度將不會被保留。",
+        () => {
+          document.getElementById('quiz-playing-screen').classList.add('hidden');
+          document.getElementById('quiz-start-screen').classList.remove('hidden');
+        }
+      );
+    }
+
+    function showCustomModal(title, message, onConfirm) {
+      const modal = document.getElementById('custom-modal');
+      const modalBox = modal.querySelector('div');
+      const titleElem = document.getElementById('modal-title');
+      const msgElem = document.getElementById('modal-message');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+
+      titleElem.textContent = title;
+      msgElem.textContent = message;
+
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modalBox.classList.remove('scale-95');
+      modalBox.classList.add('scale-100');
+
+      const closeModal = () => {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modalBox.classList.remove('scale-100');
+        modalBox.classList.add('scale-95');
+      };
+
+      cancelBtn.onclick = closeModal;
+      confirmBtn.onclick = () => {
+        closeModal();
+        if (onConfirm) onConfirm();
+      };
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const typeStyles = {
+        success: "bg-emerald-600 text-white shadow-emerald-500/20",
+        error: "bg-rose-600 text-white shadow-rose-500/20",
+        warning: "bg-amber-600 text-white shadow-amber-500/20",
+        info: "bg-slate-900 text-white shadow-slate-900/20"
+      };
+
+      const typeIcons = {
+        success: "fa-circle-check",
+        error: "fa-circle-exclamation",
+        warning: "fa-triangle-exclamation",
+        info: "fa-circle-info"
+      };
+
+      toast.className = `${typeStyles[type] || typeStyles.info} pointer-events-auto px-4 py-3 rounded-2xl shadow-lg flex items-center space-x-2.5 text-xs font-medium transform transition-all duration-300 translate-y-3 opacity-0`;
+      toast.innerHTML = `
+        <i class="fa-solid ${typeIcons[type] || typeIcons.info}"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-3', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-3', 'opacity-0');
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3200);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderWordCards();
+    });
+  </script>
+</body>
+</html>
