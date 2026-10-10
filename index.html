@@ -145,7 +145,7 @@
           </div>
           <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">多益單字自然發音規則學習館</h1>
           <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-4">
-            點選單字旁的 <strong class="text-white underline decoration-amber-400">音節標籤</strong> 可單獨聆聽該音節慢速發音；點選單字按鈕可聆聽全字發音。系統自動為多益單字解析母音群 (Vowel Teams)、Magic-e、字首字尾等拼讀規則！
+            點選單字旁的 <strong class="text-white underline decoration-amber-400">音節標籤</strong> 可單獨聆聽該音節慢速發音；點選單字按鈕可聆聽全字發音。系統自動為您匯入的單字解析母音群 (Vowel Teams)、Magic-e、字首字尾等拼讀規則！
           </p>
 
           <div class="flex flex-wrap items-center gap-3 text-xs">
@@ -155,11 +155,11 @@
             </div>
             <div class="flex items-center space-x-1.5 bg-black/20 px-3 py-1.5 rounded-lg">
               <i class="fa-solid fa-layer-group text-sky-300"></i>
-              <span>主題工作表：<strong id="sheet-count-badge" class="font-bold text-white">5</strong> 個分類</span>
+              <span>主題工作表：<strong id="sheet-count-badge" class="font-bold text-white">0</strong> 個工作表</span>
             </div>
             <div class="flex items-center space-x-1.5 bg-black/20 px-3 py-1.5 rounded-lg">
               <i class="fa-solid fa-info-circle text-sky-300"></i>
-              <span>支援拖放或點擊右上角匯入您自己的多益 Excel</span>
+              <span>請點擊右上角「匯入 Excel 單字庫」，內容僅顯示您匯入的單字</span>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@
         <div class="space-y-2">
           <div class="flex justify-between items-center text-xs">
             <span class="font-semibold text-slate-600">總體掌握度：<span id="progress-percentage" class="text-blue-600 font-bold">0%</span></span>
-            <span class="text-slate-500">已掌握 <strong id="stat-mastered-count" class="text-emerald-600">0</strong> / 待加強 <strong id="stat-flagged-count" class="text-amber-600">0</strong> / 總數 <span id="stat-total-count">150</span></span>
+            <span class="text-slate-500">已掌握 <strong id="stat-mastered-count" class="text-emerald-600">0</strong> / 待加強 <strong id="stat-flagged-count" class="text-amber-600">0</strong> / 總數 <span id="stat-total-count">0</span></span>
           </div>
           <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
             <div id="progress-bar-mastered" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%" title="已掌握"></div>
@@ -232,12 +232,7 @@
             </label>
             <select id="sheet-filter-select" onchange="handleSheetFilterChange(this.value)" 
               class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option value="all">🌟 全部主題 (5個分類共150字)</option>
-              <option value="01 Occupation">👔 01 職業 (Occupation - 30字)</option>
-              <option value="02 Recreation">🎨 02 娛樂 (Recreation - 30字)</option>
-              <option value="03 Sports">⚽ 03 運動 (Sports - 30字)</option>
-              <option value="04 Events">📅 04 活動 (Events - 30字)</option>
-              <option value="05 Shopping">🛍️ 05 購物 (Shopping - 30字)</option>
+              <option value="all">🌟 尚未匯入單字庫</option>
             </select>
           </div>
 
@@ -296,11 +291,14 @@
         <div class="w-16 h-16 mx-auto bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl mb-3">
           <i class="fa-solid fa-magnifying-glass"></i>
         </div>
-        <h3 class="text-base font-bold text-slate-700 mb-1">找不到符合的單字</h3>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto mb-4">請嘗試更換關鍵字，或重新選擇發音規則篩選項目。</p>
-        <button onclick="clearSearch()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-xl font-medium hover:bg-blue-700 transition">
+        <h3 id="empty-title" class="text-base font-bold text-slate-700 mb-1">找不到符合的單字</h3>
+        <p id="empty-desc" class="text-xs text-slate-500 max-w-sm mx-auto mb-4">請嘗試更換關鍵字，或重新選擇發音規則篩選項目。</p>
+        <button id="empty-reset-btn" onclick="resetAllFilters()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-xl font-medium hover:bg-blue-700 transition">
           重置搜尋條件
         </button>
+        <label id="empty-import-btn" for="excel-file-input" class="hidden cursor-pointer inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-xl font-medium transition">
+          <i class="fa-solid fa-file-excel"></i><span>選擇 Excel / CSV 檔案匯入</span>
+        </label>
       </div>
 
     </div>
@@ -319,7 +317,7 @@
           <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full mb-2">多益自然發音實戰</span>
           <h2 class="text-2xl sm:text-3xl font-black text-slate-900">10 題自然發音隨機測驗</h2>
           <p class="text-slate-600 text-sm mt-2 max-w-md mx-auto">
-            每次測驗將從目前單字庫中隨機抽出 <strong class="text-indigo-600">10 題</strong>。結合音節發音、聽力與自然發音拼讀規則，答錯時會立即顯示詳細音節解說與發音糾正！
+            每次測驗將從您匯入的單字庫中隨機抽出 <strong class="text-indigo-600">最多 10 題</strong>。結合音節發音、聽力與自然發音拼讀規則，答錯時會立即顯示詳細音節解說與發音糾正！
           </p>
         </div>
 
@@ -375,7 +373,7 @@
             <div class="h-4 w-px bg-slate-200"></div>
             <div>
               <span class="text-xs text-slate-400">目前進度</span>
-              <div class="text-sm font-bold text-slate-800">第 <span id="quiz-current-num" class="text-blue-600 font-extrabold text-base">1</span> / 10 題</div>
+              <div class="text-sm font-bold text-slate-800">第 <span id="quiz-current-num" class="text-blue-600 font-extrabold text-base">1</span> / <span id="quiz-total-num">10</span> 題</div>
             </div>
           </div>
 
@@ -565,167 +563,8 @@
     /* ==========================================================
        1. 150 HIGH-FREQUENCY TOEIC VOCABULARY (5 SHEETS)
        ========================================================== */
-    const RAW_TOEIC_WORDS = [
-      // === 01 Occupation (30 words) ===
-      { sheet: "01 Occupation", word: "receptionist", pos: "[n.] 名詞", phonetic: "/rɪˈsep.ʃən.ɪst/", meaning: "櫃檯接待員" },
-      { sheet: "01 Occupation", word: "dentist", pos: "[n.] 名詞", phonetic: "/ˈden.tɪst/", meaning: "牙醫" },
-      { sheet: "01 Occupation", word: "electrician", pos: "[n.] 名詞", phonetic: "/ɪˌlekˈtrɪʃ.ən/", meaning: "電工 / 電氣技師" },
-      { sheet: "01 Occupation", word: "surgeon", pos: "[n.] 名詞", phonetic: "/ˈsɝː.dʒən/", meaning: "外科醫生" },
-      { sheet: "01 Occupation", word: "painter", pos: "[n.] 名詞", phonetic: "/ˈpeɪn.tɚ/", meaning: "畫家 / 油漆工" },
-      { sheet: "01 Occupation", word: "tailor", pos: "[n.] 名詞", phonetic: "/ˈteɪ.lɚ/", meaning: "裁縫師" },
-      { sheet: "01 Occupation", word: "captain", pos: "[n.] 名詞", phonetic: "/ˈkæp.tɪn/", meaning: "船長 / 機長 / 隊長" },
-      { sheet: "01 Occupation", word: "hairstylist", pos: "[n.] 名詞", phonetic: "/ˈherˌstaɪ.lɪst/", meaning: "髮型設計師" },
-      { sheet: "01 Occupation", word: "pharmacist", pos: "[n.] 名詞", phonetic: "/ˈfɑːr.mə.sɪst/", meaning: "藥劑師" },
-      { sheet: "01 Occupation", word: "typist", pos: "[n.] 名詞", phonetic: "/ˈtaɪ.pɪst/", meaning: "打字員" },
-      { sheet: "01 Occupation", word: "accountant", pos: "[n.] 名詞", phonetic: "/əˈkaʊn.tənt/", meaning: "會計師" },
-      { sheet: "01 Occupation", word: "architect", pos: "[n.] 名詞", phonetic: "/ˈɑːr.kə.tekt/", meaning: "建築師" },
-      { sheet: "01 Occupation", word: "chef", pos: "[n.] 名詞", phonetic: "/ʃef/", meaning: "主廚 / 大廚" },
-      { sheet: "01 Occupation", word: "pilot", pos: "[n.] 名詞", phonetic: "/ˈpaɪ.lət/", meaning: "飛行員" },
-      { sheet: "01 Occupation", word: "journalist", pos: "[n.] 名詞", phonetic: "/ˈdʒɝː.nə.lɪst/", meaning: "新聞記者" },
-      { sheet: "01 Occupation", word: "consultant", pos: "[n.] 名詞", phonetic: "/kənˈsʌl.tənt/", meaning: "顧問" },
-      { sheet: "01 Occupation", word: "mechanic", pos: "[n.] 名詞", phonetic: "/məˈkæn.ɪk/", meaning: "技工 / 機械工" },
-      { sheet: "01 Occupation", word: "plumber", pos: "[n.] 名詞", phonetic: "/ˈplʌm.ɚ/", meaning: "水管水電工" },
-      { sheet: "01 Occupation", word: "veterinarian", pos: "[n.] 名詞", phonetic: "/ˌvet.ər.ɪˈner.i.ən/", meaning: "獸醫" },
-      { sheet: "01 Occupation", word: "translator", pos: "[n.] 名詞", phonetic: "/trænzˈleɪ.tɚ/", meaning: "筆譯員 / 翻譯家" },
-      { sheet: "01 Occupation", word: "librarian", pos: "[n.] 名詞", phonetic: "/laɪˈbrer.i.ən/", meaning: "圖書館員" },
-      { sheet: "01 Occupation", word: "curator", pos: "[n.] 名詞", phonetic: "/kjʊˈreɪ.tɚ/", meaning: "博物館館長 / 策展人" },
-      { sheet: "01 Occupation", word: "statistician", pos: "[n.] 名詞", phonetic: "/ˌstæt.ɪˈstɪʃ.ən/", meaning: "統計學家" },
-      { sheet: "01 Occupation", word: "optician", pos: "[n.] 名詞", phonetic: "/ɑːpˈtɪʃ.ən/", meaning: "驗光配鏡師" },
-      { sheet: "01 Occupation", word: "detective", pos: "[n.] 名詞", phonetic: "/dɪˈtek.tɪv/", meaning: "偵探 / 刑警" },
-      { sheet: "01 Occupation", word: "carpenter", pos: "[n.] 名詞", phonetic: "/ˈkɑːr.pən.tɚ/", meaning: "木匠 / 木工" },
-      { sheet: "01 Occupation", word: "paramedic", pos: "[n.] 名詞", phonetic: "/ˌper.əˈmed.ɪk/", meaning: "緊急救護人員" },
-      { sheet: "01 Occupation", word: "audiologist", pos: "[n.] 名詞", phonetic: "/ˌɔː.diˈɑː.lə.dʒɪst/", meaning: "聽力治療師" },
-      { sheet: "01 Occupation", word: "dietitian", pos: "[n.] 名詞", phonetic: "/ˌdaɪ.əˈtɪʃ.ən/", meaning: "營養師" },
-      { sheet: "01 Occupation", word: "investigator", pos: "[n.] 名詞", phonetic: "/ɪnˈves.tə.ɡeɪ.tɚ/", meaning: "調查員" },
-
-      // === 02 Recreation (30 words) ===
-      { sheet: "02 Recreation", word: "exhibition", pos: "[n.] 名詞", phonetic: "/ˌek.səˈbɪʃ.ən/", meaning: "展覽、展出" },
-      { sheet: "02 Recreation", word: "concert", pos: "[n.] 名詞", phonetic: "/ˈkɑːn.sɚt/", meaning: "音樂會、演唱會" },
-      { sheet: "02 Recreation", word: "amusement", pos: "[n.] 名詞", phonetic: "/əˈmjuːz.mənt/", meaning: "消遣、娛樂" },
-      { sheet: "02 Recreation", word: "festival", pos: "[n.] 名詞", phonetic: "/ˈfes.tə.vəl/", meaning: "慶典、節日" },
-      { sheet: "02 Recreation", word: "museum", pos: "[n.] 名詞", phonetic: "/mjuːˈziː.əm/", meaning: "博物館" },
-      { sheet: "02 Recreation", word: "orchestra", pos: "[n.] 名詞", phonetic: "/ˈɔːr.kə.strə/", meaning: "管弦樂團" },
-      { sheet: "02 Recreation", word: "cinema", pos: "[n.] 名詞", phonetic: "/ˈsɪn.ə.mə/", meaning: "電影院" },
-      { sheet: "02 Recreation", word: "tournament", pos: "[n.] 名詞", phonetic: "/ˈtɝː.nə.mənt/", meaning: "錦標賽、巡迴賽" },
-      { sheet: "02 Recreation", word: "circus", pos: "[n.] 名詞", phonetic: "/ˈsɝː.kəs/", meaning: "馬戲團" },
-      { sheet: "02 Recreation", word: "theater", pos: "[n.] 名詞", phonetic: "/ˈθiː.ə.tɚ/", meaning: "劇院、戲院" },
-      { sheet: "02 Recreation", word: "gallery", pos: "[n.] 名詞", phonetic: "/ˈɡæl.ɚ.i/", meaning: "美術館、藝廊" },
-      { sheet: "02 Recreation", word: "carnival", pos: "[n.] 名詞", phonetic: "/ˈkɑːr.nə.vəl/", meaning: "嘉年華、遊樂會" },
-      { sheet: "02 Recreation", word: "sculpture", pos: "[n.] 名詞", phonetic: "/ˈskʌlp.tʃɚ/", meaning: "雕塑、雕像" },
-      { sheet: "02 Recreation", word: "sightseeing", pos: "[n.] 名詞", phonetic: "/ˈsaɪtˌsiː.ɪŋ/", meaning: "觀光、遊覽" },
-      { sheet: "02 Recreation", word: "recreation", pos: "[n.] 名詞", phonetic: "/ˌrek.riˈeɪ.ʃən/", meaning: "休閒娛樂" },
-      { sheet: "02 Recreation", word: "souvenir", pos: "[n.] 名詞", phonetic: "/ˌsuː.vəˈnɪr/", meaning: "紀念品" },
-      { sheet: "02 Recreation", word: "aquarium", pos: "[n.] 名詞", phonetic: "/əˈkwer.i.əm/", meaning: "水族館" },
-      { sheet: "02 Recreation", word: "adventure", pos: "[n.] 名詞", phonetic: "/ədˈven.tʃɚ/", meaning: "冒險活動" },
-      { sheet: "02 Recreation", word: "broadway", pos: "[n.] 名詞", phonetic: "/ˈbrɑːd.weɪ/", meaning: "百老匯劇院" },
-      { sheet: "02 Recreation", word: "costume", pos: "[n.] 名詞", phonetic: "/ˈkɑː.stuːm/", meaning: "戲服、化妝舞會服裝" },
-      { sheet: "02 Recreation", word: "nightlife", pos: "[n.] 名詞", phonetic: "/ˈnaɪt.laɪf/", meaning: "夜生活" },
-      { sheet: "02 Recreation", word: "fairground", pos: "[n.] 名詞", phonetic: "/ˈfer.ɡraʊnd/", meaning: "露天遊樂場" },
-      { sheet: "02 Recreation", word: "parade", pos: "[n.] 名詞", phonetic: "/pəˈreɪd/", meaning: "遊行" },
-      { sheet: "02 Recreation", word: "performance", pos: "[n.] 名詞", phonetic: "/pɚˈfɔːr.məns/", meaning: "演出、表演" },
-      { sheet: "02 Recreation", word: "aquapark", pos: "[n.] 名詞", phonetic: "/ˈæk.wə.pɑːrk/", meaning: "水上樂園" },
-      { sheet: "02 Recreation", word: "planetarium", pos: "[n.] 名詞", phonetic: "/ˌplæn.ɪˈter.i.əm/", meaning: "天文館" },
-      { sheet: "02 Recreation", word: "picnic", pos: "[n.] 名詞", phonetic: "/ˈpɪk.nɪk/", meaning: "野餐" },
-      { sheet: "02 Recreation", word: "craftwork", pos: "[n.] 名詞", phonetic: "/ˈkræft.wɝːk/", meaning: "手工藝品" },
-      { sheet: "02 Recreation", word: "marina", pos: "[n.] 名詞", phonetic: "/məˈriː.nə/", meaning: "遊艇碼頭" },
-      { sheet: "02 Recreation", word: "resort", pos: "[n.] 名詞", phonetic: "/rɪˈzɔːrt/", meaning: "度假勝地" },
-
-      // === 03 Sports (30 words) ===
-      { sheet: "03 Sports", word: "marathon", pos: "[n.] 名詞", phonetic: "/ˈmær.ə.θɑːn/", meaning: "馬拉松長跑" },
-      { sheet: "03 Sports", word: "badminton", pos: "[n.] 名詞", phonetic: "/ˈbæd.mɪn.tən/", meaning: "羽毛球" },
-      { sheet: "03 Sports", word: "gymnastics", pos: "[n.] 名詞", phonetic: "/dʒɪmˈnæs.tɪks/", meaning: "體操運動" },
-      { sheet: "03 Sports", word: "stadium", pos: "[n.] 名詞", phonetic: "/ˈsteɪ.di.əm/", meaning: "體育館、露天大型運動場" },
-      { sheet: "03 Sports", word: "championship", pos: "[n.] 名詞", phonetic: "/ˈtʃæm.pi.ən.ʃɪp/", meaning: "錦標賽、冠軍頭銜" },
-      { sheet: "03 Sports", word: "athlete", pos: "[n.] 名詞", phonetic: "/ˈæθ.liːt/", meaning: "運動員" },
-      { sheet: "03 Sports", word: "referee", pos: "[n.] 名詞", phonetic: "/ˌref.əˈriː/", meaning: "裁判員" },
-      { sheet: "03 Sports", word: "spectator", pos: "[n.] 名詞", phonetic: "/spekˈteɪ.tɚ/", meaning: "現場觀眾" },
-      { sheet: "03 Sports", word: "opponent", pos: "[n.] 名詞", phonetic: "/əˈpoʊ.nənt/", meaning: "對手、敵手" },
-      { sheet: "03 Sports", word: "trophy", pos: "[n.] 名詞", phonetic: "/ˈtroʊ.fi/", meaning: "獎盃、戰利品" },
-      { sheet: "03 Sports", word: "tournament", pos: "[n.] 名詞", phonetic: "/ˈtɝː.nə.mənt/", meaning: "錦標賽" },
-      { sheet: "03 Sports", word: "volleyball", pos: "[n.] 名詞", phonetic: "/ˈvɑː.li.bɑːl/", meaning: "排球" },
-      { sheet: "03 Sports", word: "archery", pos: "[n.] 名詞", phonetic: "/ˈɑːr.tʃɚ.i/", meaning: "射箭運動" },
-      { sheet: "03 Sports", word: "swimming", pos: "[n.] 名詞", phonetic: "/ˈswɪm.ɪŋ/", meaning: "游泳" },
-      { sheet: "03 Sports", word: "fitness", pos: "[n.] 名詞", phonetic: "/ˈfɪt.nəs/", meaning: "健康、體能健身" },
-      { sheet: "03 Sports", word: "coaching", pos: "[n.] 名詞", phonetic: "/ˈkoʊ.tʃɪŋ/", meaning: "教練訓練指導" },
-      { sheet: "03 Sports", word: "cycling", pos: "[n.] 名詞", phonetic: "/ˈsaɪ.klɪŋ/", meaning: "自行車運動" },
-      { sheet: "03 Sports", word: "aerobics", pos: "[n.] 名詞", phonetic: "/erˈoʊ.bɪks/", meaning: "有氧運動" },
-      { sheet: "03 Sports", word: "skating", pos: "[n.] 名詞", phonetic: "/ˈskeɪ.tɪŋ/", meaning: "溜冰、滑輪" },
-      { sheet: "03 Sports", word: "baseball", pos: "[n.] 名詞", phonetic: "/ˈbeɪs.bɑːl/", meaning: "棒球" },
-      { sheet: "03 Sports", word: "basketball", pos: "[n.] 名詞", phonetic: "/ˈbæs.kət.bɑːl/", meaning: "籃球" },
-      { sheet: "03 Sports", word: "triathlon", pos: "[n.] 名詞", phonetic: "/traɪˈæθ.lɑːn/", meaning: "鐵人三項" },
-      { sheet: "03 Sports", word: "wrestling", pos: "[n.] 名詞", phonetic: "/ˈres.lɪŋ/", meaning: "角力、摔跤" },
-      { sheet: "03 Sports", word: "surfing", pos: "[n.] 名詞", phonetic: "/ˈsɝː.fɪŋ/", meaning: "衝浪運動" },
-      { sheet: "03 Sports", word: "fencing", pos: "[n.] 名詞", phonetic: "/ˈfen.sɪŋ/", meaning: "擊劍運動" },
-      { sheet: "03 Sports", word: "scoreboard", pos: "[n.] 名詞", phonetic: "/ˈskɔːr.bɔːrd/", meaning: "計分板" },
-      { sheet: "03 Sports", word: "quarterback", pos: "[n.] 名詞", phonetic: "/ˈkwɔːr.t̬ɚ.bæk/", meaning: "四分衛 (美式足球)" },
-      { sheet: "03 Sports", word: "playoff", pos: "[n.] 名詞", phonetic: "/ˈpleɪ.ɑːf/", meaning: "季後賽、決賽" },
-      { sheet: "03 Sports", word: "goalkeeper", pos: "[n.] 名詞", phonetic: "/ˈɡoʊlˌkiː.pɚ/", meaning: "守門員" },
-      { sheet: "03 Sports", word: "endurance", pos: "[n.] 名詞", phonetic: "/ɪnˈdʊr.əns/", meaning: "耐力、持久力" },
-
-      // === 04 Events (30 words) ===
-      { sheet: "04 Events", word: "conference", pos: "[n.] 名詞", phonetic: "/ˈkɑːn.fɚ.əns/", meaning: "大型會議、研討會" },
-      { sheet: "04 Events", word: "seminar", pos: "[n.] 名詞", phonetic: "/ˈsem.ə.nɑːr/", meaning: "專題研討會" },
-      { sheet: "04 Events", word: "banquet", pos: "[n.] 名詞", phonetic: "/ˈbæŋ.kwət/", meaning: "宴會、盛宴" },
-      { sheet: "04 Events", word: "ceremony", pos: "[n.] 名詞", phonetic: "/ˈser.ə.mə.ni/", meaning: "典禮、儀式" },
-      { sheet: "04 Events", word: "anniversary", pos: "[n.] 名詞", phonetic: "/ˌæn.əˈvɝː.sɚ.i/", meaning: "週年紀念日" },
-      { sheet: "04 Events", word: "convention", pos: "[n.] 名詞", phonetic: "/kənˈven.ʃən/", meaning: "大會、慣例協定" },
-      { sheet: "04 Events", word: "gala", pos: "[n.] 名詞", phonetic: "/ˈɡeɪ.lə/", meaning: "節慶活動、盛大晚會" },
-      { sheet: "04 Events", word: "reception", pos: "[n.] 名詞", phonetic: "/rɪˈsep.ʃən/", meaning: "歡迎會、接待處" },
-      { sheet: "04 Events", word: "symposium", pos: "[n.] 名詞", phonetic: "/sɪmˈpoʊ.zi.əm/", meaning: "學術研討座談會" },
-      { sheet: "04 Events", word: "workshop", pos: "[n.] 名詞", phonetic: "/ˈwɝːk.ʃɑːp/", meaning: "工作坊、專題研習營" },
-      { sheet: "04 Events", word: "webinar", pos: "[n.] 名詞", phonetic: "/ˈweb.ə.nɑːr/", meaning: "線上網路研討會" },
-      { sheet: "04 Events", word: "summit", pos: "[n.] 名詞", phonetic: "/ˈsʌm.ɪt/", meaning: "高峰會、頂峰" },
-      { sheet: "04 Events", word: "commencement", pos: "[n.] 名詞", phonetic: "/kəˈmens.mənt/", meaning: "畢業典禮、開端" },
-      { sheet: "04 Events", word: "fundraiser", pos: "[n.] 名詞", phonetic: "/ˈfʌndˌreɪ.zɚ/", meaning: "募款活動、籌款者" },
-      { sheet: "04 Events", word: "gathering", pos: "[n.] 名詞", phonetic: "/ˈɡæð.ɚ.ɪŋ/", meaning: "聚會、集會" },
-      { sheet: "04 Events", word: "celebration", pos: "[n.] 名詞", phonetic: "/ˌsel.əˈbreɪ.ʃən/", meaning: "慶祝活動" },
-      { sheet: "04 Events", word: "presentation", pos: "[n.] 名詞", phonetic: "/ˌprez.ənˈteɪ.ʃən/", meaning: "簡報、發表會" },
-      { sheet: "04 Events", word: "inauguration", pos: "[n.] 名詞", phonetic: "/ɪˌnɑː.ɡjəˈreɪ.ʃən/", meaning: "就職典禮、開幕落成儀式" },
-      { sheet: "04 Events", word: "agenda", pos: "[n.] 名詞", phonetic: "/əˈdʒen.də/", meaning: "議程表、待議事項" },
-      { sheet: "04 Events", word: "registration", pos: "[n.] 名詞", phonetic: "/ˌredʒ.əˈstreɪ.ʃən/", meaning: "報名登記、註冊" },
-      { sheet: "04 Events", word: "keynote", pos: "[n.] 名詞", phonetic: "/ˈkiː.noʊt/", meaning: "主旨演講、基調" },
-      { sheet: "04 Events", word: "assembly", pos: "[n.] 名詞", phonetic: "/əˈsem.bli/", meaning: "集會、裝配" },
-      { sheet: "04 Events", word: "forum", pos: "[n.] 名詞", phonetic: "/ˈfɔːr.əm/", meaning: "論壇、座談會" },
-      { sheet: "04 Events", word: "reunion", pos: "[n.] 名詞", phonetic: "/riːˈjuː.njən/", meaning: "同學會、同聚聯誼" },
-      { sheet: "04 Events", word: "parliament", pos: "[n.] 名詞", phonetic: "/ˈpɑːr.lə.mənt/", meaning: "議會會議" },
-      { sheet: "04 Events", word: "orientation", pos: "[n.] 名詞", phonetic: "/ˌɔːr.i.enˈteɪ.ʃən/", meaning: "新生訓練、職前說明培訓" },
-      { sheet: "04 Events", word: "auction", pos: "[n.] 名詞", phonetic: "/ˈɑːk.ʃən/", meaning: "拍賣會" },
-      { sheet: "04 Events", word: "rehearsal", pos: "[n.] 名詞", phonetic: "/rəˈhɝː.səl/", meaning: "彩排、排演" },
-      { sheet: "04 Events", word: "panel", pos: "[n.] 名詞", phonetic: "/ˈpæn.əl/", meaning: "座談專家小組" },
-      { sheet: "04 Events", word: "showcase", pos: "[n.] 名詞", phonetic: "/ˈʃoʊ.keɪs/", meaning: "成果展現、展示櫥窗" },
-
-      // === 05 Shopping (30 words) ===
-      { sheet: "05 Shopping", word: "discount", pos: "[n.] 名詞", phonetic: "/ˈdɪs.kaʊnt/", meaning: "折扣、優惠" },
-      { sheet: "05 Shopping", word: "receipt", pos: "[n.] 名詞", phonetic: "/rɪˈsiːt/", meaning: "收據、發票" },
-      { sheet: "05 Shopping", word: "voucher", pos: "[n.] 名詞", phonetic: "/ˈvaʊ.tʃɚ/", meaning: "商品抵用券、憑證" },
-      { sheet: "05 Shopping", word: "refund", pos: "[n.] 名詞", phonetic: "/ˈriː.fʌnd/", meaning: "退款、償還金" },
-      { sheet: "05 Shopping", word: "warranty", pos: "[n.] 名詞", phonetic: "/ˈwɔːr.ən.t̬i/", meaning: "保固、品質保證書" },
-      { sheet: "05 Shopping", word: "bargain", pos: "[n.] 名詞", phonetic: "/ˈbɑːr.ɡɪn/", meaning: "特價便宜貨；討價還價" },
-      { sheet: "05 Shopping", word: "cashier", pos: "[n.] 名詞", phonetic: "/kæʃˈɪr/", meaning: "收銀員、出納員" },
-      { sheet: "05 Shopping", word: "inventory", pos: "[n.] 名詞", phonetic: "/ˈɪn.vən.tɔːr.i/", meaning: "庫存清單、存貨" },
-      { sheet: "05 Shopping", word: "clearance", pos: "[n.] 名詞", phonetic: "/ˈklɪr.əns/", meaning: "清倉大拍賣" },
-      { sheet: "05 Shopping", word: "wholesale", pos: "[n.] 名詞", phonetic: "/ˈhoʊl.seɪl/", meaning: "批發、批發價" },
-      { sheet: "05 Shopping", word: "merchandise", pos: "[n.] 名詞", phonetic: "/ˈmɝː.tʃən.daɪs/", meaning: "商品、貨物" },
-      { sheet: "05 Shopping", word: "boutique", pos: "[n.] 名詞", phonetic: "/buːˈtiːk/", meaning: "精品店、時裝店" },
-      { sheet: "05 Shopping", word: "customer", pos: "[n.] 名詞", phonetic: "/ˈkʌs.tə.mɚ/", meaning: "顧客、買主" },
-      { sheet: "05 Shopping", word: "checkout", pos: "[n.] 名詞", phonetic: "/ˈtʃek.aʊt/", meaning: "結帳櫃檯、結帳手續" },
-      { sheet: "05 Shopping", word: "installment", pos: "[n.] 名詞", phonetic: "/ɪnˈstɑːl.mənt/", meaning: "分期付款" },
-      { sheet: "05 Shopping", word: "catalog", pos: "[n.] 名詞", phonetic: "/ˈkæt̬.əl.ɑːɡ/", meaning: "商品型錄、目錄" },
-      { sheet: "05 Shopping", word: "retailer", pos: "[n.] 名詞", phonetic: "/ˈriː.teɪ.lɚ/", meaning: "零售商" },
-      { sheet: "05 Shopping", word: "purchase", pos: "[n.] 名詞", phonetic: "/ˈpɝː.tʃəs/", meaning: "購買品、採購" },
-      { sheet: "05 Shopping", word: "coupon", pos: "[n.] 名詞", phonetic: "/ˈkuː.pɑːn/", meaning: "折價優待券" },
-      { sheet: "05 Shopping", word: "promoter", pos: "[n.] 名詞", phonetic: "/prəˈmoʊ.t̬ɚ/", meaning: "促銷員、推廣者" },
-      { sheet: "05 Shopping", word: "supermarket", pos: "[n.] 名詞", phonetic: "/ˈsuː.pɚˌmɑːr.kɪt/", meaning: "超級市場" },
-      { sheet: "05 Shopping", word: "fragrance", pos: "[n.] 名詞", phonetic: "/ˈfreɪ.ɡrəns/", meaning: "香水、香氣" },
-      { sheet: "05 Shopping", word: "trolley", pos: "[n.] 名詞", phonetic: "/ˈtrɑː.li/", meaning: "手推購物車" },
-      { sheet: "05 Shopping", word: "brand", pos: "[n.] 名詞", phonetic: "/brænd/", meaning: "商標、品牌" },
-      { sheet: "05 Shopping", word: "apparel", pos: "[n.] 名詞", phonetic: "/əˈper.əl/", meaning: "服裝、服飾" },
-      { sheet: "05 Shopping", word: "department", pos: "[n.] 名詞", phonetic: "/dɪˈpɑːrt.mənt/", meaning: "百貨部門" },
-      { sheet: "05 Shopping", word: "exchange", pos: "[n.] 名詞", phonetic: "/ɪksˈtʃeɪndʒ/", meaning: "換貨、兌換" },
-      { sheet: "05 Shopping", word: "transaction", pos: "[n.] 名詞", phonetic: "/trænˈzæk.ʃən/", meaning: "交易手續、買賣" },
-      { sheet: "05 Shopping", word: "deliver", pos: "[v.] 動詞", phonetic: "/dɪˈlɪv.ɚ/", meaning: "運送、送遞" },
-      { sheet: "05 Shopping", word: "membership", pos: "[n.] 名詞", phonetic: "/ˈmem.bɚ.ʃɪp/", meaning: "會員資格、會員卡" }
-    ];
+    // 不內建任何單字:所有內容僅來自使用者匯入的檔案
+    const RAW_TOEIC_WORDS = [];
 
     /* ==========================================================
        2. STATE & PHONICS ENGINE ALGORITHM
@@ -792,7 +631,7 @@
     /**
      * Algorithmic Phonics Rule Deductions for newly uploaded or default words
      */
-    function analyzePhonicsForWord(wordStr, meaningStr = "", sheetName = "01 Occupation", phoneticStr = "") {
+    function analyzePhonicsForWord(wordStr, meaningStr = "", sheetName = "匯入單字", phoneticStr = "") {
       const cleanWord = wordStr.trim().toLowerCase();
       const rules = [];
       let category = "vowel-team";
@@ -878,28 +717,54 @@
 
       return {
         word: cleanWord,
-        phonetic: phoneticStr || `/${cleanWord}/`,
-        meaning: meaningStr || "多益必考核心單字",
+        phonetic: phoneticStr || "",
+        meaning: meaningStr || "",
         partOfSpeech: "n.",
         sheet: sheetName,
         syllables: syllables,
         phonicsRules: rules,
         category: category,
         difficulty: difficulty,
-        example: `It is essential to memorize "${cleanWord}" for the TOEIC test.`
+        example: ""
       };
     }
 
     // Initialize 150 words from the 5 themes
-    function initDefaultData() {
-      vocabularyList = RAW_TOEIC_WORDS.map(item => {
-        const analyzed = analyzePhonicsForWord(item.word, item.meaning, item.sheet, item.phonetic);
-        analyzed.partOfSpeech = item.pos;
-        return analyzed;
-      });
+    const STORAGE_KEY = 'phonics_imported_vocab_v1';
+    function saveVocabulary() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(vocabularyList)); } catch (e) {}
+    }
+    function loadSavedVocabulary() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) vocabularyList = arr;
+        }
+      } catch (e) { vocabularyList = []; }
       currentFilteredList = [...vocabularyList];
     }
-    initDefaultData();
+    function refreshSheetSelect() {
+      const sel = document.getElementById('sheet-filter-select');
+      if (!sel) return;
+      const sheets = [...new Set(vocabularyList.map(v => v.sheet))];
+      if (sheets.length === 0) {
+        sel.innerHTML = '<option value="all">🌟 尚未匯入單字庫</option>';
+        return;
+      }
+      sel.innerHTML = `<option value="all">🌟 全部主題 (${sheets.length} 個工作表共 ${vocabularyList.length} 字)</option>` +
+        sheets.map(sh => `<option value="${sh}">📁 ${sh} (${vocabularyList.filter(v => v.sheet === sh).length} 字)</option>`).join('');
+    }
+    function resetAllFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      currentRuleFilter = 'all'; currentDifficultyFilter = 'all'; currentSheetFilter = 'all'; currentStatusFilter = 'all';
+      document.getElementById('difficulty-filter-select').value = 'all';
+      document.getElementById('sheet-filter-select').value = 'all';
+      setRuleFilter('all');
+      setStatusFilter('all');
+    }
+    loadSavedVocabulary();
 
     /* ==========================================================
        3. SPEECH SYNTHESIS & SOUND EFFECTS
@@ -1032,10 +897,10 @@
       const badge = document.getElementById('vocab-count-badge');
       const sheetBadge = document.getElementById('sheet-count-badge');
 
-      badge.textContent = currentFilteredList.length;
+      badge.textContent = vocabularyList.length;
 
       // Count distinct sheets loaded
-      const uniqueSheets = new Set(vocabularyList.map(v => v.sheet || "預設"));
+      const uniqueSheets = new Set(vocabularyList.map(v => v.sheet || "匯入單字"));
       if (sheetBadge) sheetBadge.textContent = uniqueSheets.size;
 
       // Update progress stats
@@ -1043,6 +908,13 @@
 
       if (currentFilteredList.length === 0) {
         container.innerHTML = '';
+        const noData = vocabularyList.length === 0;
+        document.getElementById('empty-title').textContent = noData ? '尚未匯入單字庫' : '找不到符合的單字';
+        document.getElementById('empty-desc').textContent = noData
+          ? '請匯入您的 Excel (.xlsx / .xls) 或 CSV 單字檔，本平台只會顯示您匯入的單字，不含任何內建單字。'
+          : '請嘗試更換關鍵字，或重新選擇發音規則篩選項目。';
+        document.getElementById('empty-reset-btn').classList.toggle('hidden', noData);
+        document.getElementById('empty-import-btn').classList.toggle('hidden', !noData);
         emptyState.classList.remove('hidden');
         return;
       }
@@ -1095,7 +967,7 @@
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-1.5">
                   <span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-100">
-                    <i class="fa-regular fa-folder mr-1"></i>${item.sheet || '多益核心'}
+                    <i class="fa-regular fa-folder mr-1"></i>${item.sheet || '匯入單字'}
                   </span>
                   <span class="${diffConfig.class} text-[10px] font-bold px-2 py-0.5 rounded-md border">
                     ${diffConfig.text}
@@ -1134,10 +1006,10 @@
               </div>
 
               <!-- Meaning -->
-              <p class="text-sm font-bold text-slate-700 mb-3.5 pb-2.5 border-b border-slate-100 flex items-center gap-1.5">
+              ${item.meaning ? `<p class="text-sm font-bold text-slate-700 mb-3.5 pb-2.5 border-b border-slate-100 flex items-center gap-1.5">
                 <i class="fa-solid fa-language text-blue-500"></i>
                 ${item.meaning}
-              </p>
+              </p>` : '<div class="mb-3.5 pb-2.5 border-b border-slate-100"></div>'}
 
               <!-- Syllables decomposition bar -->
               <div class="mb-4">
@@ -1345,6 +1217,7 @@
           }
 
           const parsedWords = [];
+          const seenWords = new Set();
           const sheetSelect = document.getElementById('sheet-filter-select');
           const detectedSheets = [];
 
@@ -1389,9 +1262,12 @@
               const rawWord = String(row[wordColIdx] || '').trim();
               const rawMeaning = meaningColIdx >= 0 ? String(row[meaningColIdx] || '').trim() : '';
               const rawPhonetic = phoneticColIdx >= 0 ? String(row[phoneticColIdx] || '').trim() : '';
-              const rawPos = posColIdx >= 0 ? String(row[posColIdx] || '').trim() : '[n.]';
+              const rawPos = posColIdx >= 0 ? String(row[posColIdx] || '').trim() : '';
 
               if (rawWord && /^[a-zA-Z\s\-']+$/.test(rawWord) && rawWord.length >= 2) {
+                const key = rawWord.toLowerCase();
+                if (seenWords.has(key)) continue;
+                seenWords.add(key);
                 const item = analyzePhonicsForWord(rawWord, rawMeaning, sheetName, rawPhonetic);
                 item.partOfSpeech = rawPos;
                 parsedWords.push(item);
@@ -1402,17 +1278,13 @@
           if (parsedWords.length > 0) {
             // Replace or merge with parsed words
             vocabularyList = parsedWords;
-
-            // Update Sheet Select Dropdown dynamically
-            if (sheetSelect && detectedSheets.length > 0) {
-              sheetSelect.innerHTML = `<option value="all">🌟 全部主題 (共 ${detectedSheets.length} 個工作表)</option>` +
-                detectedSheets.map(s => `<option value="${s}">📁 ${s}</option>`).join('');
-            }
-
-            currentFilteredList = [...vocabularyList];
-            currentSheetFilter = 'all';
-            renderWordCards();
-            showToast(`成功匯入 ${workbook.SheetNames.length} 個工作表，共 ${parsedWords.length} 個多益單字！`, "success");
+            masteredWords.clear();
+            flaggedWords.clear();
+            saveVocabulary();
+            refreshSheetSelect();
+            quizQuestions = [];
+            resetAllFilters();
+            showToast(`成功匯入 ${detectedSheets.length} 個工作表，共 ${parsedWords.length} 個單字（已排除重複）！`, "success");
             playSuccessChime();
           } else {
             showToast("未能從 Excel 中辨識出有效單字，請檢查檔案格式", "warning");
@@ -1435,6 +1307,10 @@
       // Draw from current filtered list if available, or entire vocabulary
       const candidateList = (currentFilteredList.length >= 10) ? currentFilteredList : vocabularyList;
 
+      if (vocabularyList.length === 0) {
+        showToast("請先匯入單字檔案再開始測驗", "warning");
+        return;
+      }
       if (candidateList.length < 4) {
         showToast("單字庫數量不足 4 個，無法組成測驗題目", "warning");
         return;
@@ -1470,6 +1346,9 @@
           qType = "audio-to-meaning";
         }
 
+        const needsMeaning = (qType === 'audio-to-meaning' || qType === 'rule-deduction');
+        if (needsMeaning && options.some(o => !o.meaning)) qType = "audio-to-word";
+
         return {
           id: qIdx + 1,
           target: target,
@@ -1487,6 +1366,7 @@
       const totalQ = quizQuestions.length;
 
       document.getElementById('quiz-current-num').textContent = currentQuestionIndex + 1;
+      document.getElementById('quiz-total-num').textContent = totalQ;
       document.getElementById('quiz-score-num').textContent = quizScore;
       const progressPercent = ((currentQuestionIndex + 1) / totalQ) * 100;
       document.getElementById('quiz-progress-bar').style.width = `${progressPercent}%`;
@@ -1526,7 +1406,7 @@
             <span class="inline-flex items-center gap-1 font-semibold text-blue-600">
               <i class="fa-solid fa-volume-high"></i> 請點選上方按鈕播放全字或音節發音
             </span>
-            <div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>
+            ${q.target.meaning ? `<div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>` : ""}
           </div>
         `;
       } else if (q.type === 'syllable-rule') {
@@ -1537,7 +1417,7 @@
           <div class="text-slate-600">
             <span class="font-bold text-indigo-700">音節組合拼讀：</span>
             <span>${q.target.syllables.map(s => `[${s}]`).join(" + ")}</span>
-            <div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>
+            ${q.target.meaning ? `<div class="text-[11px] text-slate-400 mt-1">中文提示：${q.target.meaning}</div>` : ""}
           </div>
         `;
       } else {
@@ -1675,7 +1555,7 @@
         icon.className = "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white font-bold bg-rose-500";
         icon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
         title.className = "font-extrabold text-base text-rose-800";
-        title.textContent = `答錯囉！正確答案是：${target.meaning} (${target.word})`;
+        title.textContent = target.meaning ? `答錯囉！正確答案是：${target.meaning} (${target.word})` : `答錯囉！正確答案是：${target.word}`;
         subtitle.className = "text-xs mt-0.5 text-rose-700";
         subtitle.textContent = `您誤選了 ${wrongChoiceDisplay}。請立即透過下方音節拼讀進行發音糾正：`;
       }
@@ -1689,7 +1569,7 @@
       `).join('<span class="text-slate-400 font-bold self-center">•</span>');
 
       ruleText.innerHTML = target.phonicsRules.map(r => `<strong>${r.rule}</strong>：${r.desc}`).join("<br>");
-      meaningText.textContent = `${target.meaning} (${target.phonetic})`;
+      meaningText.textContent = [target.meaning, target.phonetic ? `(${target.phonetic})` : ''].filter(Boolean).join(' ') || '—';
 
       const feedbackAudioBtn = document.getElementById('btn-feedback-audio');
       feedbackAudioBtn.onclick = () => {
@@ -1734,7 +1614,7 @@
       if (score >= 90) {
         badgeIcon.className = "w-24 h-24 mx-auto rounded-3xl bg-amber-100 text-amber-500 flex items-center justify-center text-4xl shadow-inner";
         badgeIcon.innerHTML = '<i class="fa-solid fa-crown text-amber-500"></i>';
-        encourageMsg.textContent = "多益自然發音大師！您已熟練掌握這 150 個核心單字的音節聽讀規則！";
+        encourageMsg.textContent = "多益自然發音大師！您已熟練掌握您匯入的單字的音節聽讀規則！";
         playSuccessChime();
       } else if (score >= 60) {
         badgeIcon.className = "w-24 h-24 mx-auto rounded-3xl bg-blue-100 text-blue-600 flex items-center justify-center text-4xl shadow-inner";
@@ -1888,6 +1768,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      refreshSheetSelect();
       renderWordCards();
     });
   </script>
